@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Icon } from "@/app/_components/Icon";
 
 export const metadata: Metadata = {
@@ -125,13 +126,13 @@ export default function DashboardOverviewPage() {
             <Icon name="download" className="text-[20px]" />
             Export
           </button>
-          <button
-            type="button"
+          <Link
+            href="/builder"
             className="flex-1 sm:flex-none px-5 py-2.5 bg-primary-container text-on-primary-container rounded font-label-sm text-label-sm hover:opacity-90 transition-all shadow-sm flex items-center justify-center gap-2"
           >
             <Icon name="add" className="text-[20px]" />
             Create Poll
-          </button>
+          </Link>
         </div>
       </div>
 

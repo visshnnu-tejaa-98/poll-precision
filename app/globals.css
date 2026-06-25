@@ -116,6 +116,7 @@
   --text-mono-data--line-height: 20px;
   --text-mono-data--font-weight: 400;
 
+  --spacing-unit: 4px;
   --spacing-gutter: 24px;
   --spacing-margin-mobile: 16px;
   --spacing-margin-desktop: 48px;

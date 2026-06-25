@@ -8,14 +8,14 @@ import { useState } from "react";
 
 const PRIMARY_LINKS = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
-  { href: "/dashboard/builder", label: "Poll Builder", icon: "ballot" },
-  { href: "/dashboard/submissions", label: "Submissions", icon: "group" },
-  { href: "/dashboard/reports", label: "Reports", icon: "insights" },
+  { href: "/builder", label: "Poll Builder", icon: "ballot" },
+  { href: "/submissions", label: "Submissions", icon: "group" },
+  { href: "/reports", label: "Reports", icon: "insights" },
 ] as const;
 
 const SECONDARY_LINKS = [
-  { href: "/dashboard/settings", label: "Settings", icon: "settings" },
-  { href: "/dashboard/help", label: "Help", icon: "help_outline" },
+  { href: "/settings", label: "Settings", icon: "settings" },
+  { href: "/help", label: "Help", icon: "help_outline" },
 ] as const;
 
 export function Sidebar({

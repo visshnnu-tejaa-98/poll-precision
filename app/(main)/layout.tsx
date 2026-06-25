@@ -1,8 +1,8 @@
-import { DashboardFooter } from "./_components/DashboardFooter";
-import { MobileHeader } from "./_components/MobileHeader";
 import { Sidebar } from "./_components/Sidebar";
 import { getCurrentLoggedInUser } from "../utils";
 import { createUser } from "../actions/user";
+import { MobileHeader } from "./_components/MobileHeader";
+import { DashboardFooter } from "./_components/DashboardFooter";
 
 export default async function DashboardLayout({
   children,
