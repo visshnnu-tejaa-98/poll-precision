@@ -1,3 +1,4 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
@@ -37,7 +38,13 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-background text-on-background font-body-md selection:bg-primary/10 selection:text-primary">
-        {children}
+        <ClerkProvider
+          signInForceRedirectUrl="/dashboard"
+          signUpForceRedirectUrl="/dashboard"
+          afterSignOutUrl="/"
+        >
+          {children}
+        </ClerkProvider>
       </body>
     </html>
   );

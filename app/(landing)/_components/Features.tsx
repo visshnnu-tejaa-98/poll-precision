@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Icon } from "./Icon";
+import { Icon } from "@/app/_components/Icon";
 import { RevealSection } from "./RevealSection";
 
 const BUILDER_IMG =

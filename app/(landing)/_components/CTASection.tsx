@@ -1,5 +1,5 @@
 import { SignInButton } from "@clerk/nextjs";
-import { Icon } from "./Icon";
+import { Icon } from "@/app/_components/Icon";
 import { RevealSection } from "./RevealSection";
 
 export function CTASection() {

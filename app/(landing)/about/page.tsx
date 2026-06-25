@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CTASection } from "../_components/CTASection";
-import { Icon } from "../_components/Icon";
+import { Icon } from "@/app/_components/Icon";
 import { RevealSection } from "../_components/RevealSection";
 
 export const metadata: Metadata = {

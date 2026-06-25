@@ -1,5 +1,5 @@
 import { SignInButton } from "@clerk/nextjs";
-import { Icon } from "./Icon";
+import { Icon } from "@/app/_components/Icon";
 import { RevealSection } from "./RevealSection";
 
 export function Hero() {
@@ -21,7 +21,7 @@ export function Hero() {
           built for modern engineering teams who value data-driven clarity.
         </p>
         <div className="flex flex-col sm:flex-row gap-6 justify-center mb-20">
-          <SignInButton>
+          <SignInButton forceRedirectUrl="/dashboard">
             <button
               type="button"
               className="bg-primary text-on-primary px-10 py-5 rounded-xl font-label-mono text-label-mono font-bold shadow-[0_4px_20px_rgba(0,82,255,0.25)] hover:shadow-[0_8px_30px_rgba(0,82,255,0.35)] hover:translate-y-[-2px] transition-all flex items-center justify-center gap-3 group active:scale-95"
