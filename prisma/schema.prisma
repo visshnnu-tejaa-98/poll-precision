@@ -13,6 +13,7 @@ datasource db {
 }
 
 enum PollStatus {
+  DRAFT
   ACTIVE
   EXPIRED
 }
@@ -27,19 +28,23 @@ model User {
 }
 
 model Poll {
-  id             String     @id @default(cuid())
-  title          String
-  description    String?
-  creatorId      String
-  creator        User       @relation(fields: [creatorId], references: [id])
-  allowAnonymous Boolean    @default(true)
-  expiresAt      DateTime?
-  isPublished    Boolean    @default(false)
-  status         PollStatus @default(ACTIVE)
-  questions      Question[]
-  responses      Response[]
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id                   String     @id @default(cuid())
+  title                String
+  description          String?
+  creatorId            String
+  creator              User       @relation(fields: [creatorId], references: [id])
+  expiresAt            DateTime?
+  status               PollStatus @default(ACTIVE)
+  questions            Question[]
+  responses            Response[]
+  allowAnonymous       Boolean    @default(true)
+  authenticatedOnly    Boolean    @default(false)
+  resultsVisibility    Boolean    @default(false)
+  isPublished          Boolean    @default(false)
+  allowResponseEditing Boolean    @default(false)
+  responseTimer        Int
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
 }
 
 model Question {

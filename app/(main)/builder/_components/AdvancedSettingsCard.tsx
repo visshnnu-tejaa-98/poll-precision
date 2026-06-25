@@ -36,7 +36,7 @@ export function AdvancedSettingsCard({ advanced, onChange }: Props) {
         <div className="space-y-stack-sm">
           <Toggle
             label="Response Timer"
-            description="Enforce a time limit"
+            description="Enforce a time limit, This will override the expire date and time in poll settings"
             checked={advanced.timerEnabled}
             onChange={(v) => update("timerEnabled", v)}
             value={advanced.timerMinutes}
