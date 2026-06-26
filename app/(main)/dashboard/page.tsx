@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Icon } from "@/app/_components/Icon";
 import { getAllPollsByUserId } from "@/app/actions/poll";
-import { formatDate } from "@/app/utils";
+import {
+  RecentPollsTable,
+  type RecentPoll,
+} from "./_components/RecentPollsTable";
 
 export const metadata: Metadata = {
   title: "Dashboard | Poll Precision",
@@ -47,70 +50,18 @@ const STATS: StatCard[] = [
   },
 ];
 
-type Status = "active" | "draft" | "expired";
-
-type PollRow = {
-  id: string;
-  title: string;
-  status: Status;
-  responses: number;
-  progress: number;
-  createdAt: string;
-};
-
-const POLLS: PollRow[] = [
-  {
-    id: "PL-8921",
-    title: "Q3 Employee Satisfaction Survey",
-    status: "active",
-    responses: 1240,
-    progress: 75,
-    createdAt: "Oct 12, 2023",
-  },
-  {
-    id: "PL-8922",
-    title: "Product Roadmap Feedback 2024",
-    status: "draft",
-    responses: 0,
-    progress: 0,
-    createdAt: "Oct 15, 2023",
-  },
-  {
-    id: "PL-8804",
-    title: "Customer Support Rating - September",
-    status: "expired",
-    responses: 3492,
-    progress: 100,
-    createdAt: "Sep 01, 2023",
-  },
-];
-
-function StatusBadge({ status }: { status: Status }) {
-  const lowerCasedStatus = status.toLowerCase();
-  if (lowerCasedStatus === "active") {
-    return (
-      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#e6f4ea] text-[#137333] border border-[#ceead6]">
-        <span className="w-2 h-2 rounded-full bg-[#137333] mr-2 animate-pulse" />
-        Active
-      </span>
-    );
-  }
-  if (lowerCasedStatus === "expired") {
-    return (
-      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#fce8e6] text-[#c5221f] border border-[#fad2cf]">
-        Expired
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-surface-container text-on-surface-variant border border-outline-variant">
-      Draft
-    </span>
-  );
-}
-
 export default async function DashboardOverviewPage() {
   const polls = await getAllPollsByUserId();
+
+  const recentPolls: RecentPoll[] = polls
+    .map((p) => ({
+      id: p.id,
+      title: p.title,
+      status: p.status,
+      responseCount: p.responses?.length ?? 0,
+      createdAt: p.createdAt,
+    }))
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   return (
     <>
@@ -171,9 +122,9 @@ export default async function DashboardOverviewPage() {
               >
                 <Icon
                   name={
-                    stat.trend.direction === "up" ?
-                      "arrow_upward"
-                    : "arrow_downward"
+                    stat.trend.direction === "up"
+                      ? "arrow_upward"
+                      : "arrow_downward"
                   }
                   className="text-[16px] font-bold"
                 />
@@ -185,99 +136,7 @@ export default async function DashboardOverviewPage() {
         ))}
       </div>
 
-      <div className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden ambient-shadow">
-        <div className="p-6 border-b border-outline-variant flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface-container-lowest">
-          <h3 className="font-headline-md text-[20px] text-on-surface font-bold">
-            Recent Polls
-          </h3>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <div className="relative flex-1 sm:flex-none">
-              <Icon
-                name="search"
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]"
-              />
-              <input
-                type="text"
-                placeholder="Search polls..."
-                className="pl-10 pr-4 py-2 border border-outline rounded bg-surface-container-low text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none w-full sm:w-64 transition-all placeholder:text-on-surface-variant/60"
-              />
-            </div>
-            <button
-              type="button"
-              className="p-2 border border-outline rounded text-on-surface-variant hover:bg-surface-container-low transition-colors flex items-center justify-center"
-            >
-              <Icon name="filter_list" />
-            </button>
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-outline-variant bg-surface-container-low/30">
-                <th className="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">
-                  Poll Title
-                </th>
-                <th className="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">
-                  Status
-                </th>
-                <th className="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">
-                  Responses
-                </th>
-                <th className="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">
-                  Date Created
-                </th>
-                <th className="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant font-semibold text-right">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant">
-              {polls.map((poll) => (
-                <tr
-                  key={poll.id}
-                  className="hover:bg-surface-container-low/40 transition-colors group"
-                >
-                  <td className="px-6 py-5">
-                    <div className="font-body-md text-on-surface font-semibold">
-                      {poll.title}
-                    </div>
-                    <div className="font-mono-data text-[12px] text-on-surface-variant/80 mt-0.5">
-                      #{poll.id}
-                    </div>
-                  </td>
-                  <td className="px-6 py-5">
-                    <StatusBadge status={poll.status as Status} />
-                  </td>
-                  <td className="px-6 py-5">
-                    <span className="font-mono-data text-on-surface-variant">
-                      {poll.responses.length}
-                    </span>
-                  </td>
-                  <td className="px-6 py-5 font-body-md text-sm text-on-surface-variant">
-                    {formatDate(poll.createdAt)}
-                  </td>
-                  <td className="px-6 py-5 text-right">
-                    <button
-                      type="button"
-                      className="p-2 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container rounded-full"
-                    >
-                      <Icon name="more_vert" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="p-5 border-t border-outline-variant bg-surface-container-lowest flex justify-center">
-          <button
-            type="button"
-            className="text-primary font-label-sm text-label-sm font-bold hover:underline underline-offset-4 decoration-2"
-          >
-            View All Polls
-          </button>
-        </div>
-      </div>
+      <RecentPollsTable polls={recentPolls} />
     </>
   );
 }
