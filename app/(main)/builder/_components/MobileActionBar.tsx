@@ -7,20 +7,20 @@ type Props = {
 
 export function MobileActionBar({ onSaveDraft, onPublish }: Props) {
   return (
-    <div className="sm:hidden flex flex-col gap-2 pt-stack-md pb-margin-mobile">
-      <button
-        type="button"
-        onClick={onPublish}
-        className="w-full px-6 py-3 bg-primary text-on-primary font-label-sm text-label-sm rounded-lg hover:bg-primary-container transition-colors duration-150 shadow-md"
-      >
-        Publish Poll
-      </button>
+    <div className="lg:hidden fixed bottom-0 left-0 md:left-64 right-0 z-30 flex flex-row gap-3 p-margin-mobile bg-surface/95 backdrop-blur-sm border-t border-outline-variant">
       <button
         type="button"
         onClick={onSaveDraft}
-        className="w-full px-4 py-3 border border-outline text-on-surface font-label-sm text-label-sm rounded-lg hover:bg-surface-container-low transition-colors duration-150"
+        className="flex-1 px-4 py-3 border border-outline text-on-surface font-label-sm text-label-sm rounded-lg hover:bg-surface-container-low transition-colors duration-150"
       >
         Save Draft
+      </button>
+      <button
+        type="button"
+        onClick={onPublish}
+        className="flex-1 px-6 py-3 bg-primary text-on-primary font-label-sm text-label-sm rounded-lg hover:bg-primary-container transition-colors duration-150 shadow-md"
+      >
+        Publish Poll
       </button>
     </div>
   );

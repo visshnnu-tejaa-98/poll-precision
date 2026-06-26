@@ -77,7 +77,7 @@ export default async function DashboardOverviewPage() {
         <div className="flex gap-3 w-full sm:w-auto">
           <button
             type="button"
-            className="flex-1 sm:flex-none px-4 py-2 bg-surface border border-outline text-on-surface rounded-lg font-label-sm text-label-sm hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2"
+            className="flex-1 sm:flex-none px-4 py-2 bg-surface border border-outline text-on-surface rounded-lg font-label-sm text-label-sm cursor-pointer hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2"
           >
             <Icon name="download" className="text-[20px]" />
             Export
@@ -122,9 +122,9 @@ export default async function DashboardOverviewPage() {
               >
                 <Icon
                   name={
-                    stat.trend.direction === "up"
-                      ? "arrow_upward"
-                      : "arrow_downward"
+                    stat.trend.direction === "up" ?
+                      "arrow_upward"
+                    : "arrow_downward"
                   }
                   className="text-[16px] font-bold"
                 />

@@ -52,7 +52,7 @@ export function Sidebar({
                 href={link.href}
                 className={
                   active ?
-                    "flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-lg px-4 py-3 transition-all"
+                    "flex items-center gap-3 bg-primary-container text-on-secondary-container rounded-lg px-4 py-3 transition-all"
                   : "flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container-low transition-colors rounded-lg"
                 }
               >

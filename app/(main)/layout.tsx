@@ -18,7 +18,6 @@ export default async function DashboardLayout({
         <div className="flex-1 p-margin-mobile md:p-margin-desktop max-w-[1280px] mx-auto w-full space-y-stack-lg">
           {children}
         </div>
-        <DashboardFooter />
       </main>
     </div>
   );

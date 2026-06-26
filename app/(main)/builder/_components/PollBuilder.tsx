@@ -7,6 +7,7 @@ import { GeneralInfoCard } from "./GeneralInfoCard";
 import { MobileActionBar } from "./MobileActionBar";
 import { PollSettingsCard } from "./PollSettingsCard";
 import { PreviewPane } from "./PreviewPane";
+import { BuilderActions } from "./BuilderActions";
 import { QuestionsCard } from "./QuestionsCard";
 import type { AdvancedSettings, PollSettings, Question } from "./types";
 import { savePoll } from "@/app/actions/poll";
@@ -60,13 +61,10 @@ export function PollBuilder() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
       <div className="lg:col-span-12">
-        <BuilderHeader
-          onSaveDraft={handleSaveDraft}
-          onPublish={handlePublish}
-        />
+        <BuilderHeader />
       </div>
 
-      <div className="lg:col-span-7 space-y-stack-lg">
+      <div className="lg:col-span-7 space-y-stack-lg pb-28 lg:pb-0">
         <GeneralInfoCard
           title={title}
           description={description}
@@ -83,12 +81,18 @@ export function PollBuilder() {
       </div>
 
       <div className="hidden lg:block lg:col-span-5">
-        <PreviewPane
-          title={title}
-          description={description}
-          questions={questions}
-          authRequired={settings.authenticatedOnly}
-        />
+        <div className="sticky top-stack-lg flex flex-col gap-stack-md h-[calc(100vh-120px)]">
+          <PreviewPane
+            title={title}
+            description={description}
+            questions={questions}
+            authRequired={settings.authenticatedOnly}
+          />
+          <BuilderActions
+            onSaveDraft={handleSaveDraft}
+            onPublish={handlePublish}
+          />
+        </div>
       </div>
     </div>
   );
