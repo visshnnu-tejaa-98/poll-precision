@@ -28,8 +28,8 @@ function formatIssue(issue: ZodIssue): string {
 }
 
 const INITIAL_SETTINGS: PollSettings = {
-  anonymousResponses: false,
-  authenticatedOnly: true,
+  anonymousResponses: true,
+  authenticatedOnly: false,
   resultsVisibility: false,
   expiresAt: "",
 };
@@ -75,9 +75,9 @@ export function PollBuilder() {
     if (!result.success) {
       const messages = [...new Set(result.error.issues.map(formatIssue))];
       const heading =
-        messages.length === 1
-          ? "Please fix the following:"
-          : `Please fix the following ${messages.length} issues:`;
+        messages.length === 1 ?
+          "Please fix the following:"
+        : `Please fix the following ${messages.length} issues:`;
       const body = messages.map((msg) => `• ${msg}`).join("\n");
       notify(`${heading}\n${body}`, "error");
       return;
@@ -91,7 +91,10 @@ export function PollBuilder() {
         router.push("/dashboard");
       }
     } catch {
-      notify("Something went wrong while publishing. Please try again.", "error");
+      notify(
+        "Something went wrong while publishing. Please try again.",
+        "error",
+      );
       setPublishing(false);
     }
   };
