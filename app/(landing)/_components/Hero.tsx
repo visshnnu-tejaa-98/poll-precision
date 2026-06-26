@@ -24,7 +24,7 @@ export function Hero() {
           <SignInButton forceRedirectUrl="/dashboard">
             <button
               type="button"
-              className="bg-primary text-on-primary px-10 py-5 rounded-xl font-label-mono text-label-mono font-bold shadow-[0_4px_20px_rgba(0,82,255,0.25)] hover:shadow-[0_8px_30px_rgba(0,82,255,0.35)] hover:translate-y-[-2px] transition-all flex items-center justify-center gap-3 group active:scale-95"
+              className="bg-primary text-on-primary px-10 py-5 rounded-xl font-label-mono text-label-mono font-bold shadow-[0_4px_20px_rgba(0,82,255,0.25)] cursor-pointer hover:shadow-[0_8px_30px_rgba(0,82,255,0.35)] hover:translate-y-[-2px] transition-all flex items-center justify-center gap-3 group active:scale-95"
             >
               Start Creating for Free
               <Icon

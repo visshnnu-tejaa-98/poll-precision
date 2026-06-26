@@ -1,7 +1,7 @@
 "use client";
 
 import { Icon } from "@/app/_components/Icon";
-import { useUser } from "@clerk/nextjs";
+import { SignOutButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -95,6 +95,15 @@ export function Sidebar({
             </Link>
           );
         })}
+        <SignOutButton>
+          <button
+            type="button"
+            className="w-full flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:bg-error/5 hover:text-error transition-colors rounded-lg"
+          >
+            <Icon name="logout" />
+            <span className="font-label-sm text-label-sm">Sign Out</span>
+          </button>
+        </SignOutButton>
       </div>
     </nav>
   );

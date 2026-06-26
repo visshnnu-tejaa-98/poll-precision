@@ -111,7 +111,6 @@ function StatusBadge({ status }: { status: Status }) {
 
 export default async function DashboardOverviewPage() {
   const polls = await getAllPollsByUserId();
-  const { createdAt, id, responses, status, title } = polls[0];
 
   return (
     <>

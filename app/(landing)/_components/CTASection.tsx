@@ -21,7 +21,7 @@ export function CTASection() {
           <SignInButton>
             <button
               type="button"
-              className="bg-primary text-on-primary px-10 py-5 rounded-xl font-label-mono text-label-mono font-bold shadow-[0_10px_25px_rgba(0,82,255,0.2)] hover:shadow-[0_15px_35px_rgba(0,82,255,0.3)] hover:translate-y-[-2px] transition-all scale-105 active:scale-100 flex items-center gap-2"
+              className="bg-primary text-on-primary px-10 py-5 rounded-xl font-label-mono text-label-mono font-bold shadow-[0_10px_25px_rgba(0,82,255,0.2)] cursor-pointer hover:shadow-[0_15px_35px_rgba(0,82,255,0.3)] hover:translate-y-[-2px] transition-all scale-105 active:scale-100 flex items-center gap-2"
             >
               Start Creating for Free
               <Icon name="arrow_forward" />
