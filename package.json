@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:generate": "npx prisma migrate dev",
-    "db:migrate": "npx prisma generate"
+    "db:migrate": "npx prisma migrate dev",
+    "db:generate": "npx prisma generate"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.8",

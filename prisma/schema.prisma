@@ -19,12 +19,13 @@ enum PollStatus {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  firstName String
-  lastName  String
-  polls     Poll[]
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  clerkUserId String
+  email       String   @unique
+  firstName   String
+  lastName    String
+  polls       Poll[]
+  createdAt   DateTime @default(now())
 }
 
 model Poll {

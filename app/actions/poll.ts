@@ -59,7 +59,7 @@ export const saveNewPoll = async (payload: PollInput, publish: boolean) => {
     });
     return { success: true, pollId: newPoll.id };
   } catch (error) {
-    console.error("Database seed error:", error);
+    console.error("Database saveNewPoll error:", error);
     throw new Error("Failed to insert the validated survey payload.");
   }
 };
@@ -68,4 +68,34 @@ export const savePoll = async (payload: any) => {
   const data = await validate(PollInputSchema, payload);
   const pollId = await saveNewPoll(data, true);
   return pollId;
+};
+
+export const getAllPollsByUserId = async () => {
+  const { clerkUserId } = await getCurrentLoggedInUser();
+
+  try {
+    const polls = await prisma.poll.findMany({
+      where: {
+        creator: {
+          clerkUserId: clerkUserId,
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        createdAt: true,
+        responses: true,
+      },
+    });
+    console.log({ polls });
+    return polls;
+  } catch (error) {
+    console.error("Database getData error:", error);
+    throw new Error("Failed to get the polls data.");
+  }
 };

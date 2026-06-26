@@ -9,23 +9,27 @@ const getCurrentLoggedInUser = async () => {
 
   const email = clerk.emailAddresses[0]?.emailAddress;
   if (!email || !clerk.firstName || !clerk.lastName) {
-    throw new Error(
-      "Clerk profile is missing firstName, lastName, or email",
-    );
+    throw new Error("Clerk profile is missing firstName, lastName, or email");
   }
 
   const dbUser = await prisma.user.upsert({
     where: { email },
-    update: {},
+    update: {
+      clerkUserId: clerk.id,
+      firstName: clerk.firstName,
+      lastName: clerk.lastName,
+    },
     create: {
       firstName: clerk.firstName,
       lastName: clerk.lastName,
       email,
+      clerkUserId: clerk.id,
     },
   });
 
   return {
     id: dbUser.id,
+    clerkUserId: clerk.id,
     firstName: dbUser.firstName,
     lastName: dbUser.lastName,
     email: dbUser.email,
@@ -33,3 +37,11 @@ const getCurrentLoggedInUser = async () => {
 };
 
 export { getCurrentLoggedInUser };
+
+export const formatDate = async (date: Date) => {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+};

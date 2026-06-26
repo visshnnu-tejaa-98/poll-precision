@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Icon } from "@/app/_components/Icon";
+import { getAllPollsByUserId } from "@/app/actions/poll";
+import { formatDate } from "@/app/utils";
 
 export const metadata: Metadata = {
   title: "Dashboard | Poll Precision",
@@ -84,7 +86,8 @@ const POLLS: PollRow[] = [
 ];
 
 function StatusBadge({ status }: { status: Status }) {
-  if (status === "active") {
+  const lowerCasedStatus = status.toLowerCase();
+  if (lowerCasedStatus === "active") {
     return (
       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#e6f4ea] text-[#137333] border border-[#ceead6]">
         <span className="w-2 h-2 rounded-full bg-[#137333] mr-2 animate-pulse" />
@@ -92,7 +95,7 @@ function StatusBadge({ status }: { status: Status }) {
       </span>
     );
   }
-  if (status === "expired") {
+  if (lowerCasedStatus === "expired") {
     return (
       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#fce8e6] text-[#c5221f] border border-[#fad2cf]">
         Expired
@@ -106,7 +109,10 @@ function StatusBadge({ status }: { status: Status }) {
   );
 }
 
-export default function DashboardOverviewPage() {
+export default async function DashboardOverviewPage() {
+  const polls = await getAllPollsByUserId();
+  const { createdAt, id, responses, status, title } = polls[0];
+
   return (
     <>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -227,7 +233,7 @@ export default function DashboardOverviewPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant">
-              {POLLS.map((poll) => (
+              {polls.map((poll) => (
                 <tr
                   key={poll.id}
                   className="hover:bg-surface-container-low/40 transition-colors group"
@@ -241,32 +247,15 @@ export default function DashboardOverviewPage() {
                     </div>
                   </td>
                   <td className="px-6 py-5">
-                    <StatusBadge status={poll.status} />
+                    <StatusBadge status={poll.status as Status} />
                   </td>
                   <td className="px-6 py-5">
-                    {poll.status === "draft" ?
-                      <span className="font-mono-data text-on-surface-variant">
-                        0
-                      </span>
-                    : <div className="flex items-center gap-4">
-                        <span className="font-mono-data text-on-surface font-medium">
-                          {poll.responses.toLocaleString()}
-                        </span>
-                        <div className="w-28 h-2 bg-surface-container rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${
-                              poll.status === "expired" ?
-                                "bg-outline"
-                              : "bg-primary"
-                            }`}
-                            style={{ width: `${poll.progress}%` }}
-                          />
-                        </div>
-                      </div>
-                    }
+                    <span className="font-mono-data text-on-surface-variant">
+                      {poll.responses.length}
+                    </span>
                   </td>
                   <td className="px-6 py-5 font-body-md text-sm text-on-surface-variant">
-                    {poll.createdAt}
+                    {formatDate(poll.createdAt)}
                   </td>
                   <td className="px-6 py-5 text-right">
                     <button
