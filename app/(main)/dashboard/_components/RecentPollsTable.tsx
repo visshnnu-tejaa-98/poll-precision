@@ -9,7 +9,7 @@ export type RecentPoll = {
   title: string;
   status: string;
   responseCount: number;
-  createdAt: Date;
+  createdAt: string;
 };
 
 const PAGE_LIMIT = 5;
@@ -153,9 +153,9 @@ export function RecentPollsTable({ polls }: { polls: RecentPoll[] }) {
             <Icon
               name="filter_list"
               className={`absolute left-3 top-1/2 -translate-y-1/2 text-[20px] pointer-events-none transition-colors ${
-                statusFilter === "all"
-                  ? "text-on-surface-variant"
-                  : "text-primary"
+                statusFilter === "all" ?
+                  "text-on-surface-variant"
+                : "text-primary"
               }`}
             />
             <select
@@ -163,9 +163,9 @@ export function RecentPollsTable({ polls }: { polls: RecentPoll[] }) {
               onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
               aria-label="Filter polls by status"
               className={`appearance-none pl-10 pr-9 py-2 border rounded bg-surface-container-low text-sm font-medium text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none cursor-pointer transition-all hover:bg-surface-container ${
-                statusFilter === "all"
-                  ? "border-outline"
-                  : "border-primary/40 bg-primary/[0.03]"
+                statusFilter === "all" ? "border-outline" : (
+                  "border-primary/40 bg-primary/[0.03]"
+                )
               }`}
             >
               {STATUS_OPTIONS.map((opt) => (

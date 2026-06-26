@@ -61,7 +61,7 @@ export default async function DashboardOverviewPage() {
       responseCount: p.responses?.length ?? 0,
       createdAt: p.createdAt,
     }))
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
     <>

@@ -124,7 +124,10 @@ export const getAllPollsByUserId = async () => {
       },
     });
     console.log({ polls });
-    return polls;
+    return polls.map((poll) => ({
+      ...poll,
+      createdAt: poll.createdAt.toISOString(),
+    }));
   } catch (error) {
     console.error("Database getData error:", error);
     throw new Error("Failed to get the polls data.");
