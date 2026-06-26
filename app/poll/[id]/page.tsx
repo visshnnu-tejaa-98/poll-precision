@@ -1,0 +1,108 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { Icon } from "@/app/_components/Icon";
+import { getPollById } from "@/app/actions/poll";
+import { EXPIRED } from "@/app/utils/constants";
+import { PollCountdown } from "./_components/PollCountdown";
+import { PollResponseForm } from "./_components/PollResponseForm";
+
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const poll = await getPollById(id);
+  return {
+    title: poll ? `${poll.title} | Poll Precision` : "Poll | Poll Precision",
+    description: poll?.description ?? "Share your feedback.",
+  };
+}
+
+export default async function PublicPollPage({ params }: Props) {
+  const { id } = await params;
+  const poll = await getPollById(id);
+
+  if (!poll) notFound();
+
+  const expiresAt = poll.expiresAt ? new Date(poll.expiresAt) : null;
+  const isClosed =
+    poll.status === EXPIRED || (expiresAt !== null && expiresAt <= new Date());
+
+  return (
+    <>
+      <header className="w-full py-6 flex justify-center items-center bg-background">
+        <div className="font-headline-md text-headline-md font-bold text-primary flex items-center gap-2">
+          <Icon name="ballot" filled />
+          PollPrecision
+        </div>
+      </header>
+
+      <main className="flex-1 w-full px-margin-mobile md:px-margin-desktop py-stack-lg max-w-[1280px] mx-auto flex flex-col items-center">
+        <div className="w-full max-w-[800px] bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
+          <div className="p-6 md:p-10">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-stack-lg border-b border-outline-variant pb-8">
+              <div>
+                <h1 className="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-on-surface mb-2">
+                  {poll.title}
+                </h1>
+                {poll.description && (
+                  <p className="font-body-lg text-body-lg text-on-surface-variant">
+                    {poll.description}
+                  </p>
+                )}
+              </div>
+              {!isClosed && expiresAt && (
+                <PollCountdown expiresAt={expiresAt.toISOString()} />
+              )}
+            </div>
+
+            {isClosed ? (
+              <div className="flex flex-col items-center text-center py-12">
+                <div className="w-16 h-16 rounded-full bg-error-container flex items-center justify-center mb-stack-md">
+                  <Icon
+                    name="lock_clock"
+                    className="text-on-error-container text-[28px]"
+                  />
+                </div>
+                <h2 className="font-headline-md text-headline-md text-on-surface mb-1">
+                  This poll is closed
+                </h2>
+                <p className="font-body-md text-body-md text-on-surface-variant max-w-[420px]">
+                  The response window for this poll has ended. Thank you for your
+                  interest.
+                </p>
+              </div>
+            ) : (
+              <PollResponseForm
+                questions={poll.questions}
+                authenticatedOnly={poll.authenticatedOnly}
+              />
+            )}
+          </div>
+        </div>
+      </main>
+
+      <footer className="w-full py-8 px-margin-mobile md:px-margin-desktop mt-auto flex flex-col md:flex-row justify-between items-center gap-4 max-w-[1280px] mx-auto border-t border-outline-variant">
+        <div className="font-label-sm text-label-sm font-bold text-on-surface">
+          © {new Date().getFullYear()} PollPrecision. All rights reserved.
+        </div>
+        <div className="flex flex-wrap justify-center gap-6">
+          <a
+            className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100"
+            href="#"
+          >
+            Privacy Policy
+          </a>
+          <a
+            className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100"
+            href="#"
+          >
+            Terms of Service
+          </a>
+        </div>
+      </footer>
+    </>
+  );
+}

@@ -62,6 +62,14 @@ export function Navbar() {
 
           <Show when="signed-in">
             <Show when="signed-in">
+              <Link href={"/dashboard"}>
+                <button
+                  type="button"
+                  className="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-label-mono text-label-mono font-bold shadow-sm cursor-pointer hover:bg-primary/90 transition-all active:scale-95"
+                >
+                  Dashboard
+                </button>
+              </Link>
               <UserButton />
             </Show>
           </Show>

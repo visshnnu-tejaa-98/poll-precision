@@ -64,10 +64,41 @@ export const saveNewPoll = async (payload: PollInput, publish: boolean) => {
   }
 };
 
-export const savePoll = async (payload: any) => {
+export const savePoll = async (payload: unknown) => {
   const data = await validate(PollInputSchema, payload);
   const pollId = await saveNewPoll(data, true);
   return pollId;
+};
+
+export const getPollById = async (pollId: string) => {
+  try {
+    const poll = await prisma.poll.findFirst({
+      where: { id: pollId, isPublished: true },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        expiresAt: true,
+        authenticatedOnly: true,
+        questions: {
+          orderBy: { order: "asc" },
+          select: {
+            id: true,
+            title: true,
+            isRequired: true,
+            options: {
+              select: { id: true, text: true },
+            },
+          },
+        },
+      },
+    });
+    return poll;
+  } catch (error) {
+    console.error("Database getPollById error:", error);
+    throw new Error("Failed to get the poll.");
+  }
 };
 
 export const getAllPollsByUserId = async () => {

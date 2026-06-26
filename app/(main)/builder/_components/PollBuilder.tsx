@@ -8,10 +8,10 @@ import { MobileActionBar } from "./MobileActionBar";
 import { PollSettingsCard } from "./PollSettingsCard";
 import { PreviewPane } from "./PreviewPane";
 import { BuilderActions } from "./BuilderActions";
+import { PublishSuccessModal } from "./PublishSuccessModal";
 import { QuestionsCard } from "./QuestionsCard";
 import type { AdvancedSettings, PollSettings, Question } from "./types";
 import { savePoll } from "@/app/actions/poll";
-import { useRouter } from "next/navigation";
 import { PollInputSchema } from "../zod.schema";
 import { useToast } from "@/app/_components/Toast";
 import type { ZodIssue } from "zod";
@@ -47,7 +47,7 @@ export function PollBuilder() {
   const [settings, setSettings] = useState<PollSettings>(INITIAL_SETTINGS);
   const [advanced, setAdvanced] = useState<AdvancedSettings>(INITIAL_ADVANCED);
   const [publishing, setPublishing] = useState(false);
-  const router = useRouter();
+  const [publishedPollId, setPublishedPollId] = useState<string | null>(null);
   const { notify } = useToast();
 
   const handleSaveDraft = () => {
@@ -85,10 +85,10 @@ export function PollBuilder() {
 
     setPublishing(true);
     try {
-      const pollId = await savePoll(rawData);
-      if (pollId) {
+      const result = await savePoll(rawData);
+      if (result?.pollId) {
         notify("Poll published successfully", "success");
-        router.push("/dashboard");
+        setPublishedPollId(result.pollId);
       }
     } catch {
       notify(
@@ -100,41 +100,45 @@ export function PollBuilder() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
-      <div className="lg:col-span-12">
-        <BuilderHeader />
-      </div>
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+        <div className="lg:col-span-12">
+          <BuilderHeader />
+        </div>
 
-      <div className="lg:col-span-7 space-y-stack-lg pb-28 lg:pb-0">
-        <GeneralInfoCard
-          title={title}
-          description={description}
-          onTitleChange={setTitle}
-          onDescriptionChange={setDescription}
-        />
-        <QuestionsCard questions={questions} onChange={setQuestions} />
-        <PollSettingsCard settings={settings} onChange={setSettings} />
-        <AdvancedSettingsCard advanced={advanced} onChange={setAdvanced} />
-        <MobileActionBar
-          onSaveDraft={handleSaveDraft}
-          onPublish={handlePublish}
-        />
-      </div>
-
-      <div className="hidden lg:block lg:col-span-5">
-        <div className="sticky top-stack-lg flex flex-col gap-stack-md h-[calc(100vh-120px)]">
-          <PreviewPane
+        <div className="lg:col-span-7 space-y-stack-lg pb-28 lg:pb-0">
+          <GeneralInfoCard
             title={title}
             description={description}
-            questions={questions}
-            authRequired={settings.authenticatedOnly}
+            onTitleChange={setTitle}
+            onDescriptionChange={setDescription}
           />
-          <BuilderActions
+          <QuestionsCard questions={questions} onChange={setQuestions} />
+          <PollSettingsCard settings={settings} onChange={setSettings} />
+          <AdvancedSettingsCard advanced={advanced} onChange={setAdvanced} />
+          <MobileActionBar
             onSaveDraft={handleSaveDraft}
             onPublish={handlePublish}
+            publishing={publishing}
           />
         </div>
+
+        <div className="hidden lg:block lg:col-span-5">
+          <div className="sticky top-stack-lg flex flex-col gap-stack-md h-[calc(100vh-120px)]">
+            <PreviewPane
+              title={title}
+              description={description}
+              questions={questions}
+              authRequired={settings.authenticatedOnly}
+            />
+            <BuilderActions
+              onSaveDraft={handleSaveDraft}
+              onPublish={handlePublish}
+            />
+          </div>
+        </div>
       </div>
-    </div>
+      {publishedPollId && <PublishSuccessModal pollId={publishedPollId} />}
+    </>
   );
 }
