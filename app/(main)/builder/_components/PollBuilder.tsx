@@ -9,30 +9,8 @@ import { PollSettingsCard } from "./PollSettingsCard";
 import { PreviewPane } from "./PreviewPane";
 import { QuestionsCard } from "./QuestionsCard";
 import type { AdvancedSettings, PollSettings, Question } from "./types";
-
-const SEED_QUESTIONS: Question[] = [
-  {
-    id: "seed-q1",
-    title: "Which department do you work in?",
-    type: "single",
-    required: true,
-    options: [
-      { id: "seed-q1-o1", text: "Engineering" },
-      { id: "seed-q1-o2", text: "Marketing" },
-    ],
-  },
-  {
-    id: "seed-q2",
-    title: "How satisfied are you with the current office culture?",
-    type: "single",
-    required: false,
-    options: [
-      { id: "seed-q2-o1", text: "Extremely Satisfied" },
-      { id: "seed-q2-o2", text: "Somewhat Satisfied" },
-      { id: "seed-q2-o3", text: "Neutral" },
-    ],
-  },
-];
+import { savePoll } from "@/app/actions/poll";
+import { useRouter } from "next/navigation";
 
 const INITIAL_SETTINGS: PollSettings = {
   anonymousResponses: false,
@@ -48,12 +26,12 @@ const INITIAL_ADVANCED: AdvancedSettings = {
 };
 
 export function PollBuilder() {
-  const [title, setTitle] = useState("Q3 Employee Satisfaction Survey");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [questions, setQuestions] = useState<Question[]>(SEED_QUESTIONS);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [settings, setSettings] = useState<PollSettings>(INITIAL_SETTINGS);
-  const [advanced, setAdvanced] =
-    useState<AdvancedSettings>(INITIAL_ADVANCED);
+  const [advanced, setAdvanced] = useState<AdvancedSettings>(INITIAL_ADVANCED);
+  const router = useRouter();
 
   const handleSaveDraft = () => {
     console.log("save draft", {
@@ -65,14 +43,18 @@ export function PollBuilder() {
     });
   };
 
-  const handlePublish = () => {
-    console.log("publish poll", {
+  const handlePublish = async () => {
+    const rawData = {
       title,
       description,
       questions,
-      settings,
-      advanced,
-    });
+      ...settings,
+      ...advanced,
+    };
+    const pollId = await savePoll(rawData);
+    if (pollId) {
+      router.push("/dashboard");
+    }
   };
 
   return (

@@ -31,7 +31,7 @@ export function Sidebar({
     <nav className="hidden md:flex flex-col fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant z-40">
       <div className="p-6">
         <Link href="/dashboard" className="flex items-center gap-3 mb-8 group">
-          <div className="w-10 h-10 rounded bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xl shadow-sm">
+          <div className="w-10 h-10 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xl shadow-sm">
             P
           </div>
           <div>
@@ -52,8 +52,8 @@ export function Sidebar({
                 href={link.href}
                 className={
                   active ?
-                    "flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded px-4 py-3 transition-all"
-                  : "flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container-low transition-colors rounded"
+                    "flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-lg px-4 py-3 transition-all"
+                  : "flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container-low transition-colors rounded-lg"
                 }
               >
                 <Icon name={link.icon} filled={active} />
@@ -74,7 +74,7 @@ export function Sidebar({
       <div className="mt-auto p-6 space-y-1 border-t border-outline-variant">
         <button
           type="button"
-          className="w-full py-2.5 mb-4 bg-surface border border-outline text-primary font-label-sm text-label-sm rounded hover:bg-primary/5 transition-colors"
+          className="w-full py-2.5 mb-4 bg-surface border border-outline text-primary font-label-sm text-label-sm rounded-lg hover:bg-primary/5 transition-colors"
         >
           Upgrade Plan
         </button>
@@ -86,8 +86,8 @@ export function Sidebar({
               href={link.href}
               className={
                 active ?
-                  "flex items-center gap-3 bg-secondary-container text-on-secondary-container px-4 py-2 rounded transition-all"
-                : "flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:bg-surface-container-low transition-colors rounded"
+                  "flex items-center gap-3 bg-secondary-container text-on-secondary-container px-4 py-2 rounded-lg transition-all"
+                : "flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:bg-surface-container-low transition-colors rounded-lg"
               }
             >
               <Icon name={link.icon} filled={active} />

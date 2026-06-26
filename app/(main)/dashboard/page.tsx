@@ -121,14 +121,14 @@ export default function DashboardOverviewPage() {
         <div className="flex gap-3 w-full sm:w-auto">
           <button
             type="button"
-            className="flex-1 sm:flex-none px-5 py-2.5 bg-surface border border-outline text-on-surface rounded font-label-sm text-label-sm hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2"
+            className="flex-1 sm:flex-none px-4 py-2 bg-surface border border-outline text-on-surface rounded-lg font-label-sm text-label-sm hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2"
           >
             <Icon name="download" className="text-[20px]" />
             Export
           </button>
           <Link
             href="/builder"
-            className="flex-1 sm:flex-none px-5 py-2.5 bg-primary-container text-on-primary-container rounded font-label-sm text-label-sm hover:opacity-90 transition-all shadow-sm flex items-center justify-center gap-2"
+            className="flex-1 sm:flex-none px-4 py-2 bg-primary-container text-on-primary-container rounded-lg font-label-sm text-label-sm hover:opacity-90 transition-all shadow-sm flex items-center justify-center gap-2"
           >
             <Icon name="add" className="text-[20px]" />
             Create Poll
@@ -166,9 +166,9 @@ export default function DashboardOverviewPage() {
               >
                 <Icon
                   name={
-                    stat.trend.direction === "up"
-                      ? "arrow_upward"
-                      : "arrow_downward"
+                    stat.trend.direction === "up" ?
+                      "arrow_upward"
+                    : "arrow_downward"
                   }
                   className="text-[16px] font-bold"
                 />
@@ -244,27 +244,26 @@ export default function DashboardOverviewPage() {
                     <StatusBadge status={poll.status} />
                   </td>
                   <td className="px-6 py-5">
-                    {poll.status === "draft" ? (
+                    {poll.status === "draft" ?
                       <span className="font-mono-data text-on-surface-variant">
                         0
                       </span>
-                    ) : (
-                      <div className="flex items-center gap-4">
+                    : <div className="flex items-center gap-4">
                         <span className="font-mono-data text-on-surface font-medium">
                           {poll.responses.toLocaleString()}
                         </span>
                         <div className="w-28 h-2 bg-surface-container rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full ${
-                              poll.status === "expired"
-                                ? "bg-outline"
-                                : "bg-primary"
+                              poll.status === "expired" ?
+                                "bg-outline"
+                              : "bg-primary"
                             }`}
                             style={{ width: `${poll.progress}%` }}
                           />
                         </div>
                       </div>
-                    )}
+                    }
                   </td>
                   <td className="px-6 py-5 font-body-md text-sm text-on-surface-variant">
                     {poll.createdAt}

@@ -42,7 +42,8 @@ model Poll {
   resultsVisibility    Boolean    @default(false)
   isPublished          Boolean    @default(false)
   allowResponseEditing Boolean    @default(false)
-  responseTimer        Int
+  responseTimer        Boolean
+  timerInMinutes       Int
   createdAt            DateTime   @default(now())
   updatedAt            DateTime   @updatedAt
 }

@@ -1,16 +1,34 @@
 "use server";
 
 import { currentUser } from "@clerk/nextjs/server";
+import { prisma } from "./lib/db";
 
 const getCurrentLoggedInUser = async () => {
-  const user = await currentUser();
-  if (!user) throw Error("User not found");
-  const { firstName, lastName } = user;
-  const email = user.emailAddresses[0].emailAddress;
+  const clerk = await currentUser();
+  if (!clerk) throw new Error("User not authenticated");
+
+  const email = clerk.emailAddresses[0]?.emailAddress;
+  if (!email || !clerk.firstName || !clerk.lastName) {
+    throw new Error(
+      "Clerk profile is missing firstName, lastName, or email",
+    );
+  }
+
+  const dbUser = await prisma.user.upsert({
+    where: { email },
+    update: {},
+    create: {
+      firstName: clerk.firstName,
+      lastName: clerk.lastName,
+      email,
+    },
+  });
+
   return {
-    firstName,
-    lastName,
-    email,
+    id: dbUser.id,
+    firstName: dbUser.firstName,
+    lastName: dbUser.lastName,
+    email: dbUser.email,
   };
 };
 
