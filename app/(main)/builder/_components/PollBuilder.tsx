@@ -12,6 +12,20 @@ import { QuestionsCard } from "./QuestionsCard";
 import type { AdvancedSettings, PollSettings, Question } from "./types";
 import { savePoll } from "@/app/actions/poll";
 import { useRouter } from "next/navigation";
+import { PollInputSchema } from "../zod.schema";
+import { useToast } from "@/app/_components/Toast";
+import type { ZodIssue } from "zod";
+
+function formatIssue(issue: ZodIssue): string {
+  const [root, qIndex, field, oIndex] = issue.path;
+  if (root === "questions" && typeof qIndex === "number") {
+    if (field === "options" && typeof oIndex === "number") {
+      return `Question ${qIndex + 1}, Option ${oIndex + 1}: ${issue.message}`;
+    }
+    return `Question ${qIndex + 1}: ${issue.message}`;
+  }
+  return issue.message;
+}
 
 const INITIAL_SETTINGS: PollSettings = {
   anonymousResponses: false,
@@ -32,7 +46,9 @@ export function PollBuilder() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [settings, setSettings] = useState<PollSettings>(INITIAL_SETTINGS);
   const [advanced, setAdvanced] = useState<AdvancedSettings>(INITIAL_ADVANCED);
+  const [publishing, setPublishing] = useState(false);
   const router = useRouter();
+  const { notify } = useToast();
 
   const handleSaveDraft = () => {
     console.log("save draft", {
@@ -45,6 +61,8 @@ export function PollBuilder() {
   };
 
   const handlePublish = async () => {
+    if (publishing) return;
+
     const rawData = {
       title,
       description,
@@ -52,9 +70,29 @@ export function PollBuilder() {
       ...settings,
       ...advanced,
     };
-    const pollId = await savePoll(rawData);
-    if (pollId) {
-      router.push("/dashboard");
+
+    const result = PollInputSchema.safeParse(rawData);
+    if (!result.success) {
+      const messages = [...new Set(result.error.issues.map(formatIssue))];
+      const heading =
+        messages.length === 1
+          ? "Please fix the following:"
+          : `Please fix the following ${messages.length} issues:`;
+      const body = messages.map((msg) => `• ${msg}`).join("\n");
+      notify(`${heading}\n${body}`, "error");
+      return;
+    }
+
+    setPublishing(true);
+    try {
+      const pollId = await savePoll(rawData);
+      if (pollId) {
+        notify("Poll published successfully", "success");
+        router.push("/dashboard");
+      }
+    } catch {
+      notify("Something went wrong while publishing. Please try again.", "error");
+      setPublishing(false);
     }
   };
 
