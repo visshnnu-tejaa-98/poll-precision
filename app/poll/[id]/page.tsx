@@ -6,7 +6,7 @@ import { getPollById } from "@/app/actions/poll";
 import { EXPIRED } from "@/app/utils/constants";
 import { PollCountdown } from "./_components/PollCountdown";
 import { PollResponseForm } from "./_components/PollResponseForm";
-import { socket } from "../../../socket";
+import { useSocket } from "@/app/utils/SocketProvider";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -56,9 +56,7 @@ export default function PublicPollPage({ params }: Props) {
 
   const [poll, setPoll] = useState<Poll | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const [isConnected, setIsConnected] = useState(false);
-  const [transport, setTransport] = useState("N/A");
+  const { isConnected, transport, lastMessage } = useSocket();
 
   // Fetch the poll once per id. Runs in an effect (not during render) so it
   // fires a single request instead of looping on every re-render.
@@ -78,43 +76,6 @@ export default function PublicPollPage({ params }: Props) {
       active = false;
     };
   }, [id]);
-
-  // Socket setup goes here — e.g. open the connection for `id`, listen for
-  // live updates, and clean up on unmount:
-  // useEffect(() => {
-  //   const socket = io(...);
-  //   socket.emit("poll:join", id);
-  //   socket.on("poll:update", (payload) => { /* update state */ });
-  //   return () => socket.disconnect();
-  // }, [id]);
-
-  useEffect(() => {
-    if (socket.connected) {
-      onConnect();
-    }
-
-    function onConnect() {
-      setIsConnected(true);
-      setTransport(socket.io.engine.transport.name);
-
-      socket.io.engine.on("upgrade", (transport) => {
-        setTransport(transport.name);
-      });
-    }
-
-    function onDisconnect() {
-      setIsConnected(false);
-      setTransport("N/A");
-    }
-
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-
-    return () => {
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
-    };
-  }, []);
 
   if (loading) {
     return (
@@ -159,8 +120,9 @@ export default function PublicPollPage({ params }: Props) {
         <div className="p-6 md:p-10">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-stack-lg border-b border-outline-variant pb-8">
             <div>
-              <p>status: {isConnected ? "connected" : "disconnected"}</p>
+              <p>Status: {isConnected ? "🟢 Connected" : "🔴 Disconnected"}</p>
               <p>Transport: {transport}</p>
+              <p>Message: {lastMessage || "—"}</p>
               <h1 className="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-on-surface mb-2">
                 {poll.title}
               </h1>

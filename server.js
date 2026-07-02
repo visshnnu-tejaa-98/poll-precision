@@ -16,6 +16,16 @@ app.prepare().then(() => {
 
   io.on("connection", (socket) => {
     console.log("Socket Connected", { socketId: socket.id });
+
+    socket.emit("message", "Hello from server");
+
+    // Echo client pings back so the round-trip is visible on the client.
+    socket.on("message", (data) => {
+      console.log("message from client:", data);
+      socket.emit("message", `Echo: ${data}`);
+    });
+
+    socket.on("select:option", (data) => console.log(data));
   });
 
   httpServer

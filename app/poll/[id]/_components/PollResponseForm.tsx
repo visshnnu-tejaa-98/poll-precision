@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { Icon } from "@/app/_components/Icon";
+import { useSocket } from "@/app/utils/SocketProvider";
 
 type Option = { id: string; text: string };
 type Question = {
@@ -17,9 +18,11 @@ type Props = {
 };
 
 export function PollResponseForm({ questions, authenticatedOnly }: Props) {
+  // console.log({ questions });
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [missing, setMissing] = useState<Set<string>>(new Set());
   const [submitted, setSubmitted] = useState(false);
+  const { socket, isConnected, transport, lastMessage } = useSocket();
 
   const select = (questionId: string, optionId: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
@@ -107,11 +110,9 @@ export function PollResponseForm({ questions, authenticatedOnly }: Props) {
                   <label
                     key={option.id}
                     className={`flex items-center p-4 cursor-pointer rounded-lg border bg-surface-container-lowest hover:bg-surface-container-low transition-all duration-150 shadow-sm relative overflow-hidden group ${
-                      checked
-                        ? "border-primary"
-                        : isMissing
-                          ? "border-error/50"
-                          : "border-outline-variant hover:border-primary"
+                      checked ? "border-primary"
+                      : isMissing ? "border-error/50"
+                      : "border-outline-variant hover:border-primary"
                     }`}
                   >
                     <input
@@ -124,7 +125,9 @@ export function PollResponseForm({ questions, authenticatedOnly }: Props) {
                     />
                     <div
                       className={`w-5 h-5 shrink-0 rounded-full border-2 mr-4 transition-all duration-200 ${
-                        checked ? "border-[6px] border-primary" : "border-outline"
+                        checked ?
+                          "border-[6px] border-primary"
+                        : "border-outline"
                       }`}
                     />
                     <span
