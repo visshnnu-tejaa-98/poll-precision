@@ -25,7 +25,9 @@ app.prepare().then(() => {
       socket.emit("message", `Echo: ${data}`);
     });
 
-    socket.on("select:option", (data) => console.log(data));
+    socket.on("select:option", (data) => {
+      console.log("select:option from client:", data);
+    });
   });
 
   httpServer

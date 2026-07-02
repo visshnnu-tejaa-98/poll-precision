@@ -154,6 +154,7 @@ export default function PublicPollPage({ params }: Props) {
               </p>
             </div>
           : <PollResponseForm
+              pollId={poll.id}
               questions={poll.questions}
               authenticatedOnly={poll.authenticatedOnly}
             />

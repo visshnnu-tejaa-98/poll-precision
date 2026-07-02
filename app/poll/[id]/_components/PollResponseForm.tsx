@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { Icon } from "@/app/_components/Icon";
-import { useSocket } from "@/app/utils/SocketProvider";
+import { submitPollResponse } from "@/app/actions/response";
 
 type Option = { id: string; text: string };
 type Question = {
@@ -13,16 +13,21 @@ type Question = {
 };
 
 type Props = {
+  pollId: string;
   questions: Question[];
   authenticatedOnly: boolean;
 };
 
-export function PollResponseForm({ questions, authenticatedOnly }: Props) {
-  // console.log({ questions });
+export function PollResponseForm({
+  pollId,
+  questions,
+  authenticatedOnly,
+}: Props) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [missing, setMissing] = useState<Set<string>>(new Set());
   const [submitted, setSubmitted] = useState(false);
-  const { socket, isConnected, transport, lastMessage } = useSocket();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const select = (questionId: string, optionId: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
@@ -34,8 +39,11 @@ export function PollResponseForm({ questions, authenticatedOnly }: Props) {
     });
   };
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submitting) return;
+    setError("");
+
     const unanswered = questions
       .filter((q) => q.isRequired && !answers[q.id])
       .map((q) => q.id);
@@ -48,7 +56,21 @@ export function PollResponseForm({ questions, authenticatedOnly }: Props) {
       return;
     }
 
-    setSubmitted(true);
+    setSubmitting(true);
+    const result = await submitPollResponse({
+      pollId,
+      answers: Object.entries(answers).map(([questionId, optionId]) => ({
+        questionId,
+        optionId,
+      })),
+    });
+
+    if (result.success) {
+      setSubmitted(true);
+    } else {
+      setError(result.error);
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -145,20 +167,29 @@ export function PollResponseForm({ questions, authenticatedOnly }: Props) {
         );
       })}
 
-      <div className="pt-8 border-t border-outline-variant flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        {authenticatedOnly && (
-          <p className="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
-            <Icon name="lock" className="text-[16px]" />
-            Authentication required
+      <div className="pt-8 border-t border-outline-variant flex flex-col gap-4">
+        {error && (
+          <p className="font-label-sm text-label-sm text-error flex items-center gap-1">
+            <Icon name="error" className="text-[16px]" />
+            {error}
           </p>
         )}
-        <button
-          type="submit"
-          className="sm:ml-auto bg-primary text-on-primary font-label-sm text-label-sm px-8 py-3.5 rounded-lg hover:bg-primary-fixed-dim transition-colors duration-150 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 flex items-center justify-center gap-2"
-        >
-          Submit Response
-          <Icon name="send" className="text-[18px]" />
-        </button>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {authenticatedOnly && (
+            <p className="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+              <Icon name="lock" className="text-[16px]" />
+              Authentication required
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={submitting}
+            className="sm:ml-auto bg-primary text-on-primary font-label-sm text-label-sm px-8 py-3.5 rounded-lg hover:bg-primary-fixed-dim transition-colors duration-150 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {submitting ? "Submitting…" : "Submit Response"}
+            <Icon name="send" className="text-[18px]" />
+          </button>
+        </div>
       </div>
     </form>
   );
