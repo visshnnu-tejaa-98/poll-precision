@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type SubmitEvent } from "react";
+import { useEffect, useRef, useState, type SubmitEvent } from "react";
 import { Icon } from "@/app/_components/Icon";
 import { submitPollResponse } from "@/app/actions/response";
 
@@ -16,15 +16,26 @@ type Props = {
   pollId: string;
   questions: Question[];
   authenticatedOnly: boolean;
+  /** Response timer (advanced setting): auto-submit after `timerMinutes`. */
+  responseTimer?: boolean;
+  timerMinutes?: number;
   /** Called after a successful submit; receives the submitted answers. When
    * provided, the form does not render its own thank-you screen. */
   onSubmitted?: (answers: Record<string, string>) => void;
 };
 
+function formatClock(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 export function PollResponseForm({
   pollId,
   questions,
   authenticatedOnly,
+  responseTimer = false,
+  timerMinutes = 0,
   onSubmitted,
 }: Props) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -32,6 +43,19 @@ export function PollResponseForm({
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [timedOut, setTimedOut] = useState(false);
+
+  const timerActive = responseTimer && timerMinutes > 0;
+  const [remaining, setRemaining] = useState(
+    timerActive ? timerMinutes * 60 : 0,
+  );
+
+  // Refs so the timer callback always sees the latest answers / submit fn.
+  const answersRef = useRef(answers);
+  const lockedRef = useRef(false);
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
 
   const select = (questionId: string, optionId: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
@@ -43,42 +67,72 @@ export function PollResponseForm({
     });
   };
 
-  const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (submitting) return;
+  const doSubmit = async (auto: boolean) => {
+    if (lockedRef.current) return;
     setError("");
+    const current = answersRef.current;
 
-    const unanswered = questions
-      .filter((q) => q.isRequired && !answers[q.id])
-      .map((q) => q.id);
-
-    if (unanswered.length > 0) {
-      setMissing(new Set(unanswered));
-      document
-        .getElementById(`question-${unanswered[0]}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
+    if (!auto) {
+      const unanswered = questions
+        .filter((q) => q.isRequired && !current[q.id])
+        .map((q) => q.id);
+      if (unanswered.length > 0) {
+        setMissing(new Set(unanswered));
+        document
+          .getElementById(`question-${unanswered[0]}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
     }
 
+    lockedRef.current = true;
     setSubmitting(true);
+    if (auto) setTimedOut(true);
+
     const result = await submitPollResponse({
       pollId,
-      answers: Object.entries(answers).map(([questionId, optionId]) => ({
+      auto,
+      answers: Object.entries(current).map(([questionId, optionId]) => ({
         questionId,
         optionId,
       })),
     });
 
     if (result.success) {
-      if (onSubmitted) {
-        onSubmitted(answers);
-      } else {
-        setSubmitted(true);
-      }
+      if (onSubmitted) onSubmitted(current);
+      else setSubmitted(true);
     } else {
       setError(result.error);
       setSubmitting(false);
+      setTimedOut(false);
+      lockedRef.current = false; // allow retry
     }
+  };
+
+  // Keep a ref to the latest doSubmit so the interval never goes stale.
+  const doSubmitRef = useRef(doSubmit);
+  useEffect(() => {
+    doSubmitRef.current = doSubmit;
+  });
+
+  // Countdown → auto-submit on expiry.
+  useEffect(() => {
+    if (!timerActive) return;
+    const deadline = Date.now() + timerMinutes * 60 * 1000;
+    const interval = setInterval(() => {
+      const secs = Math.max(0, Math.round((deadline - Date.now()) / 1000));
+      setRemaining(secs);
+      if (secs <= 0) {
+        clearInterval(interval);
+        doSubmitRef.current(true);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timerActive, timerMinutes]);
+
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    doSubmit(false);
   };
 
   if (submitted) {
@@ -86,23 +140,48 @@ export function PollResponseForm({
       <div className="flex flex-col items-center text-center py-12">
         <div className="w-16 h-16 rounded-full bg-tertiary-container flex items-center justify-center mb-stack-md">
           <Icon
-            name="check_circle"
+            name={timedOut ? "timer_off" : "check_circle"}
             filled
             className="text-on-tertiary-container text-[32px]"
           />
         </div>
         <h2 className="font-headline-md text-headline-md text-on-surface mb-1">
-          Thank you for your response!
+          {timedOut ? "Time’s up!" : "Thank you for your response!"}
         </h2>
         <p className="font-body-md text-body-md text-on-surface-variant max-w-[420px]">
-          Your feedback has been recorded. You can safely close this window.
+          {timedOut
+            ? "The timer ran out, so we saved the answers you had filled in."
+            : "Your feedback has been recorded. You can safely close this window."}
         </p>
       </div>
     );
   }
 
+  const lowTime = timerActive && remaining <= 30;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-12" noValidate>
+      {timerActive && (
+        <div
+          className={`flex items-center gap-2 rounded-lg px-4 py-3 font-label-sm text-label-sm ${
+            lowTime
+              ? "bg-error-container text-on-error-container"
+              : "bg-surface-container text-on-surface-variant"
+          }`}
+        >
+          <Icon name="timer" className="text-[20px]" />
+          <span>
+            Time left to submit:{" "}
+            <span className="font-mono-data font-semibold">
+              {formatClock(remaining)}
+            </span>
+          </span>
+          <span className="ml-auto text-[12px] opacity-80">
+            Auto-submits when the timer ends
+          </span>
+        </div>
+      )}
+
       {questions.map((question, index) => {
         const isMissing = missing.has(question.id);
         return (

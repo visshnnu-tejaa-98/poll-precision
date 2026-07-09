@@ -26,17 +26,31 @@ export function PollSettingsCard({ settings, onChange }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
         <div className="space-y-stack-sm">
+          {/* Anonymous and Authenticated-only are mutually exclusive: exactly
+              one is always on (never both, never neither). */}
           <Toggle
             label="Anonymous Responses"
             description="Hide respondent identities"
             checked={settings.anonymousResponses}
-            onChange={(v) => update("anonymousResponses", v)}
+            onChange={(v) =>
+              onChange({
+                ...settings,
+                anonymousResponses: v,
+                authenticatedOnly: !v,
+              })
+            }
           />
           <Toggle
             label="Authenticated Only"
             description="Require login to vote"
             checked={settings.authenticatedOnly}
-            onChange={(v) => update("authenticatedOnly", v)}
+            onChange={(v) =>
+              onChange({
+                ...settings,
+                authenticatedOnly: v,
+                anonymousResponses: !v,
+              })
+            }
           />
           <Toggle
             label="Results Visibility"

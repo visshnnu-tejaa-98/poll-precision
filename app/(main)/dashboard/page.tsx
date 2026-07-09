@@ -17,6 +17,7 @@ export default async function DashboardOverviewPage() {
     .map((p) => ({
       id: p.id,
       title: p.title,
+      description: p.description,
       status: p.status,
       expiresAt: p.expiresAt,
       responseCount: p.responses?.length ?? 0,
@@ -103,7 +104,9 @@ export default async function DashboardOverviewPage() {
         polls={recentPolls}
         title="Recent Polls"
         limit={5}
+        rowHrefBase="/analytics"
         viewAllHref="/mypolls"
+        showDescription={true}
       />
     </>
   );

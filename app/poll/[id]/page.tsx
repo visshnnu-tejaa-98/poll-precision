@@ -199,7 +199,11 @@ export default function PublicPollPage({ params }: Props) {
           <p className="font-body-md text-body-md text-on-surface-variant max-w-[420px] mb-stack-md">
             This poll only accepts responses from authenticated users.
           </p>
-          <SignInButton mode="modal">
+          <SignInButton
+            mode="modal"
+            forceRedirectUrl={`/poll/${id}`}
+            signUpForceRedirectUrl={`/poll/${id}`}
+          >
             <button
               type="button"
               className="bg-primary text-on-primary font-label-sm text-label-sm px-6 py-3 rounded-lg hover:bg-primary-fixed-dim transition-colors shadow-sm flex items-center gap-2"
@@ -217,6 +221,8 @@ export default function PublicPollPage({ params }: Props) {
         pollId={poll.id}
         questions={poll.questions}
         authenticatedOnly={poll.authenticatedOnly}
+        responseTimer={poll.responseTimer}
+        timerMinutes={poll.timerInMinutes}
         onSubmitted={
           poll.resultsVisibility
             ? (answers) => {

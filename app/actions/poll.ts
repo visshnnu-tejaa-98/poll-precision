@@ -315,6 +315,8 @@ export const getPollById = async (pollId: string) => {
         authenticatedOnly: true,
         allowAnonymous: true,
         resultsVisibility: true,
+        responseTimer: true,
+        timerInMinutes: true,
         questions: {
           orderBy: { order: "asc" },
           select: {
@@ -407,6 +409,7 @@ export const getAllPollsByUserId = async () => {
       select: {
         id: true,
         title: true,
+        description: true,
         status: true,
         expiresAt: true,
         createdAt: true,

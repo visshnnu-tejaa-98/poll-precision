@@ -39,7 +39,7 @@ export const submitPollResponse = async (
   if (!parsed.success) {
     return { success: false, error: "Invalid response payload." };
   }
-  const { pollId, answers } = parsed.data;
+  const { pollId, answers, auto } = parsed.data;
 
   // 1. Load the poll from the DB (source of truth).
   const poll = await prisma.poll.findUnique({
@@ -102,9 +102,16 @@ export const submitPollResponse = async (
   const questionById = new Map(poll.questions.map((q) => [q.id, q]));
   const answerByQuestion = new Map(answers.map((a) => [a.questionId, a.optionId]));
 
-  for (const question of poll.questions) {
-    if (question.isRequired && !answerByQuestion.has(question.id)) {
-      return { success: false, error: "Please answer all required questions." };
+  // On timer auto-submit we save whatever is filled, so required questions are
+  // only enforced for a manual submit.
+  if (!auto) {
+    for (const question of poll.questions) {
+      if (question.isRequired && !answerByQuestion.has(question.id)) {
+        return {
+          success: false,
+          error: "Please answer all required questions.",
+        };
+      }
     }
   }
   for (const answer of answers) {

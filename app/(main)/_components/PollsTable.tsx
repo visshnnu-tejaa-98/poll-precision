@@ -143,7 +143,7 @@ function DefaultActions({ poll }: { poll: PollRow }) {
       <CopyLinkButton pollId={poll.id} />
       <Tooltip label="Open poll">
         <Link
-          href={`/poll/${poll.id}`}
+          href={`/analytics/${poll.id}`}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Open poll"
@@ -344,7 +344,7 @@ export function PollsTable({
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
               placeholder="Search polls..."
-              className="pl-10 pr-9 py-2 border border-outline rounded bg-surface-container-low text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none w-full sm:w-64 transition-all placeholder:text-on-surface-variant/60"
+              className="pl-10 pr-9 py-2 border border-outline rounded-lg bg-surface-container-low text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none w-full sm:w-64 transition-all placeholder:text-on-surface-variant/60"
             />
             {query && (
               <button
@@ -373,7 +373,7 @@ export function PollsTable({
                 onStatusChange(e.target.value as PollStatusFilter)
               }
               aria-label="Filter polls by status"
-              className={`appearance-none pl-10 pr-9 py-2 border rounded bg-surface-container-low text-sm font-medium text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none cursor-pointer transition-all hover:bg-surface-container ${
+              className={`appearance-none pl-10 pr-9 py-2 border rounded-lg bg-surface-container-low text-sm font-medium text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none cursor-pointer transition-all hover:bg-surface-container ${
                 statusFilter === "all" ? "border-outline" : (
                   "border-primary/40 bg-primary/[0.03]"
                 )
@@ -437,18 +437,17 @@ export function PollsTable({
                   className="hover:bg-surface-container-low/40 transition-colors"
                 >
                   <td className="px-6 py-5 max-w-[320px]">
-                    {rowHrefBase ? (
+                    {rowHrefBase ?
                       <Link
                         href={`${rowHrefBase}/${poll.id}`}
                         className="font-body-md text-on-surface font-semibold truncate block hover:text-primary hover:underline underline-offset-2"
                       >
                         {poll.title}
                       </Link>
-                    ) : (
-                      <div className="font-body-md text-on-surface font-semibold truncate">
+                    : <div className="font-body-md text-on-surface font-semibold truncate">
                         {poll.title}
                       </div>
-                    )}
+                    }
                     {showDescription && poll.description && (
                       <div className="font-body-md text-sm text-on-surface-variant/90 mt-0.5 truncate">
                         {poll.description}
