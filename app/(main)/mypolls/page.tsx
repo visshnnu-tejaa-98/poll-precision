@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Icon } from "@/app/_components/Icon";
 import { getMyPolls } from "@/app/actions/poll";
 import { getEffectiveStatus } from "@/app/utils/poll-status";
-import { MyPollsTable } from "./_components/MyPollsTable";
+import { PollsTable } from "../_components/PollsTable";
 
 export const metadata: Metadata = {
   title: "My Polls | Poll Precision",
@@ -66,7 +66,14 @@ export default async function MyPollsPage() {
         ))}
       </div>
 
-      <MyPollsTable polls={polls} />
+      <PollsTable
+        polls={polls}
+        title="All Polls"
+        showCount
+        showDescription
+        showQuestions
+        showExpires
+      />
     </>
   );
 }

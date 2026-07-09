@@ -1,23 +1,39 @@
 "use client";
 
 import { Icon } from "@/app/_components/Icon";
-import Link from "next/link";
-import { useMemo, useState } from "react";
 import {
   getEffectiveStatus,
   type EffectiveStatus,
 } from "@/app/utils/poll-status";
+import Link from "next/link";
+import { useMemo, useState, type ReactNode } from "react";
 
-export type MyPoll = {
+export type PollRow = {
   id: string;
   title: string;
-  description: string | null;
+  description?: string | null;
   status: string;
-  isPublished: boolean;
-  questionCount: number;
-  responseCount: number;
   expiresAt: string | null;
+  responseCount: number;
+  questionCount?: number;
   createdAt: string;
+};
+
+type Props = {
+  polls: PollRow[];
+  title: string;
+  /** Append the filtered count to the title, e.g. "All Polls (12)". */
+  showCount?: boolean;
+  showDescription?: boolean;
+  showQuestions?: boolean;
+  showExpires?: boolean;
+  /** When set, only the first `limit` rows are shown with a "view all" footer. */
+  limit?: number;
+  viewAllHref?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  /** Override the per-row action buttons. Defaults to copy-link + open. */
+  renderActions?: (poll: PollRow) => ReactNode;
 };
 
 type StatusFilter = "all" | "active" | "draft" | "expired";
@@ -85,18 +101,40 @@ function CopyLinkButton({ pollId }: { pollId: string }) {
   );
 }
 
-function EmptyPollsWidget() {
+function DefaultActions({ poll }: { poll: PollRow }) {
+  return (
+    <div className="flex items-center justify-end gap-1">
+      <CopyLinkButton pollId={poll.id} />
+      <Link
+        href={`/poll/${poll.id}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Open public poll"
+        className="p-2 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container rounded-full"
+      >
+        <Icon name="open_in_new" className="text-[20px]" />
+      </Link>
+    </div>
+  );
+}
+
+function EmptyPollsWidget({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   return (
     <div className="bg-surface-container-lowest border border-outline-variant rounded-xl ambient-shadow p-12 text-center">
       <div className="mx-auto w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-4">
         <Icon name="ballot" className="text-3xl text-on-surface-variant" />
       </div>
       <h4 className="font-headline-md text-headline-md text-on-surface font-bold mb-2">
-        You haven’t created any polls yet.
+        {title}
       </h4>
       <p className="font-body-md text-on-surface-variant mb-6 max-w-sm mx-auto">
-        Spin up your first poll — share a link, watch responses land in
-        real-time.
+        {description}
       </p>
       <Link
         href="/builder"
@@ -135,7 +173,19 @@ function NoMatchesView({ onClear }: { onClear: () => void }) {
   );
 }
 
-export function MyPollsTable({ polls }: { polls: MyPoll[] }) {
+export function PollsTable({
+  polls,
+  title,
+  showCount = false,
+  showDescription = false,
+  showQuestions = false,
+  showExpires = false,
+  limit,
+  viewAllHref,
+  emptyTitle = "You haven’t created any polls yet.",
+  emptyDescription = "Spin up your first poll — share a link, watch responses land in real-time.",
+  renderActions,
+}: Props) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
@@ -150,20 +200,24 @@ export function MyPollsTable({ polls }: { polls: MyPoll[] }) {
     });
   }, [polls, query, statusFilter]);
 
+  const visible = limit ? filtered.slice(0, limit) : filtered;
+  const hasMore = limit !== undefined && filtered.length > limit;
+
   const clearFilters = () => {
     setQuery("");
     setStatusFilter("all");
   };
 
   if (polls.length === 0) {
-    return <EmptyPollsWidget />;
+    return <EmptyPollsWidget title={emptyTitle} description={emptyDescription} />;
   }
 
   return (
     <div className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden ambient-shadow">
       <div className="p-6 border-b border-outline-variant flex flex-col sm:flex-row justify-between items-center gap-4">
         <h3 className="font-headline-md text-[20px] text-on-surface font-bold">
-          All Polls ({filtered.length})
+          {title}
+          {showCount ? ` (${filtered.length})` : ""}
         </h3>
         <div className="flex gap-2 w-full sm:w-auto items-center">
           <div className="relative flex-1 sm:flex-none">
@@ -212,7 +266,7 @@ export function MyPollsTable({ polls }: { polls: MyPoll[] }) {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {visible.length === 0 ? (
         <NoMatchesView onClear={clearFilters} />
       ) : (
         <div className="overflow-x-auto">
@@ -225,25 +279,29 @@ export function MyPollsTable({ polls }: { polls: MyPoll[] }) {
                 <th className="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">
                   Status
                 </th>
-                <th className="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">
-                  Questions
-                </th>
+                {showQuestions && (
+                  <th className="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">
+                    Questions
+                  </th>
+                )}
                 <th className="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">
                   Responses
                 </th>
                 <th className="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">
                   Created
                 </th>
-                <th className="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">
-                  Expires
-                </th>
+                {showExpires && (
+                  <th className="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">
+                    Expires
+                  </th>
+                )}
                 <th className="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant font-semibold text-right">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant">
-              {filtered.map((poll) => (
+              {visible.map((poll) => (
                 <tr
                   key={poll.id}
                   className="hover:bg-surface-container-low/40 transition-colors"
@@ -252,7 +310,7 @@ export function MyPollsTable({ polls }: { polls: MyPoll[] }) {
                     <div className="font-body-md text-on-surface font-semibold truncate">
                       {poll.title}
                     </div>
-                    {poll.description && (
+                    {showDescription && poll.description && (
                       <div className="font-body-md text-sm text-on-surface-variant/90 mt-0.5 truncate">
                         {poll.description}
                       </div>
@@ -266,11 +324,13 @@ export function MyPollsTable({ polls }: { polls: MyPoll[] }) {
                       status={getEffectiveStatus(poll.status, poll.expiresAt)}
                     />
                   </td>
-                  <td className="px-6 py-5">
-                    <span className="font-mono-data text-on-surface-variant">
-                      {poll.questionCount}
-                    </span>
-                  </td>
+                  {showQuestions && (
+                    <td className="px-6 py-5">
+                      <span className="font-mono-data text-on-surface-variant">
+                        {poll.questionCount ?? 0}
+                      </span>
+                    </td>
+                  )}
                   <td className="px-6 py-5">
                     <span className="font-mono-data text-on-surface-variant">
                       {poll.responseCount}
@@ -279,27 +339,35 @@ export function MyPollsTable({ polls }: { polls: MyPoll[] }) {
                   <td className="px-6 py-5 font-body-md text-sm text-on-surface-variant">
                     {dateFmt.format(new Date(poll.createdAt))}
                   </td>
-                  <td className="px-6 py-5 font-body-md text-sm text-on-surface-variant">
-                    {poll.expiresAt ? dateFmt.format(new Date(poll.expiresAt)) : "—"}
-                  </td>
+                  {showExpires && (
+                    <td className="px-6 py-5 font-body-md text-sm text-on-surface-variant">
+                      {poll.expiresAt
+                        ? dateFmt.format(new Date(poll.expiresAt))
+                        : "—"}
+                    </td>
+                  )}
                   <td className="px-6 py-5">
-                    <div className="flex items-center justify-end gap-1">
-                      <CopyLinkButton pollId={poll.id} />
-                      <Link
-                        href={`/poll/${poll.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Open public poll"
-                        className="p-2 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container rounded-full"
-                      >
-                        <Icon name="open_in_new" className="text-[20px]" />
-                      </Link>
-                    </div>
+                    {renderActions ? (
+                      renderActions(poll)
+                    ) : (
+                      <DefaultActions poll={poll} />
+                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {hasMore && viewAllHref && (
+        <div className="p-5 border-t border-outline-variant flex justify-center">
+          <Link
+            href={viewAllHref}
+            className="text-primary font-label-sm text-label-sm font-bold hover:underline underline-offset-4 decoration-2"
+          >
+            View All Polls ({filtered.length})
+          </Link>
         </div>
       )}
     </div>

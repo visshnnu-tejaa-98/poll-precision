@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Icon } from "@/app/_components/Icon";
 import { getAllPollsByUserId } from "@/app/actions/poll";
-import {
-  RecentPollsTable,
-  type RecentPoll,
-} from "./_components/RecentPollsTable";
+import { PollsTable, type PollRow } from "../_components/PollsTable";
 import { getStatsDetails } from "@/app/utils";
 
 export const metadata: Metadata = {
@@ -16,7 +13,7 @@ export const metadata: Metadata = {
 export default async function DashboardOverviewPage() {
   const polls = await getAllPollsByUserId();
 
-  const recentPolls: RecentPoll[] = polls
+  const recentPolls: PollRow[] = polls
     .map((p) => ({
       id: p.id,
       title: p.title,
@@ -101,7 +98,12 @@ export default async function DashboardOverviewPage() {
         ))}
       </div>
 
-      <RecentPollsTable polls={recentPolls} />
+      <PollsTable
+        polls={recentPolls}
+        title="Recent Polls"
+        limit={5}
+        viewAllHref="/mypolls"
+      />
     </>
   );
 }
