@@ -313,6 +313,8 @@ export const getPollById = async (pollId: string) => {
         status: true,
         expiresAt: true,
         authenticatedOnly: true,
+        allowAnonymous: true,
+        resultsVisibility: true,
         questions: {
           orderBy: { order: "asc" },
           select: {
@@ -331,6 +333,61 @@ export const getPollById = async (pollId: string) => {
     console.error("Database getPollById error:", error);
     throw new Error("Failed to get the poll.");
   }
+};
+
+export const getPublicPollResults = async (pollId: string) => {
+  const poll = await prisma.poll.findFirst({
+    where: { id: pollId, isPublished: true },
+    select: {
+      resultsVisibility: true,
+      questions: {
+        orderBy: { order: "asc" },
+        select: {
+          id: true,
+          title: true,
+          options: { select: { id: true, text: true } },
+        },
+      },
+    },
+  });
+
+  // Only expose results when the creator has enabled results visibility.
+  if (!poll || !poll.resultsVisibility) return null;
+
+  const [totalResponses, grouped] = await Promise.all([
+    prisma.response.count({ where: { pollId } }),
+    prisma.answer.groupBy({
+      by: ["optionId"],
+      where: { response: { pollId } },
+      _count: { optionId: true },
+    }),
+  ]);
+
+  const countByOption = new Map(
+    grouped.map((g) => [g.optionId, g._count.optionId]),
+  );
+
+  return {
+    totalResponses,
+    questions: poll.questions.map((q) => {
+      const options = q.options.map((o) => ({
+        id: o.id,
+        text: o.text,
+        count: countByOption.get(o.id) ?? 0,
+      }));
+      const totalAnswers = options.reduce((sum, o) => sum + o.count, 0);
+      return {
+        id: q.id,
+        title: q.title,
+        options: options.map((o) => ({
+          ...o,
+          percentage: totalAnswers
+            ? Math.round((o.count / totalAnswers) * 100)
+            : 0,
+        })),
+      };
+    }),
+  };
 };
 
 export const getAllPollsByUserId = async () => {

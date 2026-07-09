@@ -16,12 +16,16 @@ type Props = {
   pollId: string;
   questions: Question[];
   authenticatedOnly: boolean;
+  /** Called after a successful submit; receives the submitted answers. When
+   * provided, the form does not render its own thank-you screen. */
+  onSubmitted?: (answers: Record<string, string>) => void;
 };
 
 export function PollResponseForm({
   pollId,
   questions,
   authenticatedOnly,
+  onSubmitted,
 }: Props) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [missing, setMissing] = useState<Set<string>>(new Set());
@@ -66,7 +70,11 @@ export function PollResponseForm({
     });
 
     if (result.success) {
-      setSubmitted(true);
+      if (onSubmitted) {
+        onSubmitted(answers);
+      } else {
+        setSubmitted(true);
+      }
     } else {
       setError(result.error);
       setSubmitting(false);

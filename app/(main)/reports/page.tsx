@@ -16,10 +16,24 @@ const dateFmt = new Intl.DateTimeFormat("en-GB", {
   year: "numeric",
 });
 
-const EXPORTS = [
-  { label: "Monthly Performance", meta: "CSV, PDF", icon: "description" },
-  { label: "Raw Data Dump", meta: "JSON, XLSX", icon: "table_view" },
-  { label: "Demographic Insights", meta: "PDF", icon: "query_stats" },
+const EXPORTS: {
+  label: string;
+  meta: string;
+  icon: string;
+  href?: string;
+}[] = [
+  {
+    label: "All Responses",
+    meta: "CSV • all polls",
+    icon: "table_view",
+    href: "/api/export/responses",
+  },
+  { label: "Monthly Performance", meta: "PDF • coming soon", icon: "description" },
+  {
+    label: "Demographic Insights",
+    meta: "PDF • coming soon",
+    icon: "query_stats",
+  },
 ];
 
 function StatusBadge({ status }: { status: "active" | "draft" | "expired" }) {
@@ -317,28 +331,44 @@ export default async function ReportsPage() {
             Download report bundles
           </p>
           <div className="space-y-3 flex-1">
-            {EXPORTS.map((item) => (
-              <div
-                key={item.label}
-                className="p-4 bg-surface-container border border-outline-variant rounded-lg flex items-center justify-between group hover:border-primary transition-colors cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <Icon name={item.icon} className="text-primary" />
-                  <div>
-                    <p className="font-label-sm text-on-surface font-bold leading-tight">
-                      {item.label}
-                    </p>
-                    <p className="text-[12px] text-on-surface-variant">
-                      {item.meta}
-                    </p>
+            {EXPORTS.map((item) => {
+              const inner = (
+                <>
+                  <div className="flex items-center gap-3">
+                    <Icon name={item.icon} className="text-primary" />
+                    <div>
+                      <p className="font-label-sm text-on-surface font-bold leading-tight">
+                        {item.label}
+                      </p>
+                      <p className="text-[12px] text-on-surface-variant">
+                        {item.meta}
+                      </p>
+                    </div>
                   </div>
+                  <Icon
+                    name="download"
+                    className="text-on-surface-variant group-hover:text-primary"
+                  />
+                </>
+              );
+              return item.href ? (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  download
+                  className="p-4 bg-surface-container border border-outline-variant rounded-lg flex items-center justify-between group hover:border-primary transition-colors cursor-pointer"
+                >
+                  {inner}
+                </a>
+              ) : (
+                <div
+                  key={item.label}
+                  className="p-4 bg-surface-container border border-outline-variant rounded-lg flex items-center justify-between opacity-60 cursor-not-allowed"
+                >
+                  {inner}
                 </div>
-                <Icon
-                  name="download"
-                  className="text-on-surface-variant group-hover:text-primary"
-                />
-              </div>
-            ))}
+              );
+            })}
           </div>
           <button
             type="button"

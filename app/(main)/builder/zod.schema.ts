@@ -25,12 +25,24 @@ export const PollInputSchema = z.object({
   anonymousResponses: z.boolean().default(false),
   authenticatedOnly: z.boolean().default(false),
   resultsVisibility: z.boolean().default(false),
+  // `datetime-local` inputs are minute-precision local strings (no seconds/tz),
+  // e.g. "2026-07-09T14:30". Parse leniently: empty → no expiry.
   expiresAt: z
     .string()
-    .datetime({ local: true })
-    .or(z.literal(""))
     .nullable()
-    .transform((val) => (val ? new Date(val) : null)),
+    .optional()
+    .transform((val, ctx) => {
+      if (!val) return null;
+      const date = new Date(val);
+      if (Number.isNaN(date.getTime())) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Invalid expiry date and time",
+        });
+        return z.NEVER;
+      }
+      return date;
+    }),
   allowResponseEditing: z.boolean().default(false),
   timerEnabled: z.boolean().default(false),
   timerMinutes: z.number().int().nonnegative().default(0),

@@ -9,6 +9,29 @@ type SubmitResult =
   | { success: true; responseId: string }
   | { success: false; error: string };
 
+// Whether the currently signed-in user has already responded to this poll.
+// Anonymous visitors always return false (we don't track them across sessions).
+export const hasRespondedToPoll = async (
+  pollId: string,
+): Promise<boolean> => {
+  const clerk = await currentUser();
+  if (!clerk) return false;
+  const email = clerk.emailAddresses[0]?.emailAddress;
+  if (!email) return false;
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+  if (!user) return false;
+
+  const existing = await prisma.response.findUnique({
+    where: { pollId_respondentId: { pollId, respondentId: user.id } },
+    select: { id: true },
+  });
+  return Boolean(existing);
+};
+
 export const submitPollResponse = async (
   payload: unknown,
 ): Promise<SubmitResult> => {

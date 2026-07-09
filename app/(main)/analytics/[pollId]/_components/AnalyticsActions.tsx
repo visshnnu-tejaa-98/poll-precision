@@ -50,6 +50,14 @@ export function AnalyticsActions({
         <Icon name="share" className="text-[18px]" />
         Share
       </button>
+      <a
+        href={`/api/export/responses?pollId=${pollId}`}
+        download
+        className="flex-1 md:flex-none border border-outline bg-surface text-on-surface font-label-sm text-label-sm px-4 py-2 rounded-lg hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2"
+      >
+        <Icon name="download" className="text-[18px]" />
+        Export
+      </a>
       <button
         type="button"
         onClick={publish}
