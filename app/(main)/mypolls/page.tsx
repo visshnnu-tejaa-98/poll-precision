@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Icon } from "@/app/_components/Icon";
-import { getMyPolls } from "@/app/actions/poll";
-import { getEffectiveStatus } from "@/app/utils/poll-status";
+import { getMyPollsPaginated, getMyPollsStats } from "@/app/actions/poll";
 import { PollsTable } from "../_components/PollsTable";
 
 export const metadata: Metadata = {
@@ -10,14 +9,19 @@ export const metadata: Metadata = {
   description: "All the polls you have created.",
 };
 
-export default async function MyPollsPage() {
-  const polls = await getMyPolls();
+const PAGE_SIZE = 10;
 
-  const totalPolls = polls.length;
-  const totalResponses = polls.reduce((sum, p) => sum + p.responseCount, 0);
-  const activePolls = polls.filter(
-    (p) => getEffectiveStatus(p.status, p.expiresAt) === "active",
-  ).length;
+export default async function MyPollsPage() {
+  const [{ totalPolls, activePolls, totalResponses }, firstPage] =
+    await Promise.all([
+      getMyPollsStats(),
+      getMyPollsPaginated({
+        page: 1,
+        pageSize: PAGE_SIZE,
+        query: "",
+        status: "all",
+      }),
+    ]);
 
   const stats = [
     { label: "Total Polls", value: totalPolls, icon: "ballot" },
@@ -26,8 +30,8 @@ export default async function MyPollsPage() {
   ];
 
   return (
-    <>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="flex flex-col gap-6 md:h-[calc(100vh-96px)] md:overflow-hidden">
+      <div className="shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="font-headline-md text-headline-md text-on-surface font-bold">
             My Polls
@@ -45,7 +49,7 @@ export default async function MyPollsPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="shrink-0 grid grid-cols-1 md:grid-cols-3 gap-6">
         {stats.map((stat) => (
           <div
             key={stat.label}
@@ -67,13 +71,16 @@ export default async function MyPollsPage() {
       </div>
 
       <PollsTable
-        polls={polls}
         title="All Polls"
         showCount
         showDescription
         showQuestions
         showExpires
+        fillHeight
+        fetchPage={getMyPollsPaginated}
+        pageSize={PAGE_SIZE}
+        initialData={firstPage}
       />
-    </>
+    </div>
   );
 }
