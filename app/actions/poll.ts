@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { PollInput, PollInputSchema } from "../(main)/builder/zod.schema";
 import { validate } from "../common/zod.middleware";
 import { prisma } from "../lib/db";
@@ -85,6 +86,127 @@ export const getMyPollsPaginated = async (args: PollsPageRequest) => {
     console.error("Database getMyPollsPaginated error:", error);
     throw new Error("Failed to get the polls data.");
   }
+};
+
+export const getPollAnalytics = async (pollId: string) => {
+  const { id: userId } = await getCurrentLoggedInUser();
+
+  const poll = await prisma.poll.findFirst({
+    where: { id: pollId, creatorId: userId },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      status: true,
+      expiresAt: true,
+      createdAt: true,
+      isPublished: true,
+      resultsVisibility: true,
+      questions: {
+        orderBy: { order: "asc" },
+        select: {
+          id: true,
+          title: true,
+          order: true,
+          options: { select: { id: true, text: true } },
+        },
+      },
+    },
+  });
+
+  if (!poll) return null;
+
+  const days = 14;
+  const dayMs = 86_400_000;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = new Date(today.getTime() - (days - 1) * dayMs);
+
+  const [totalResponses, anonymousCount, grouped, recent] = await Promise.all([
+    prisma.response.count({ where: { pollId } }),
+    prisma.response.count({ where: { pollId, isAnonymous: true } }),
+    prisma.answer.groupBy({
+      by: ["optionId"],
+      where: { response: { pollId } },
+      _count: { optionId: true },
+    }),
+    prisma.response.findMany({
+      where: { pollId, submittedAt: { gte: start } },
+      select: { submittedAt: true },
+    }),
+  ]);
+
+  const countByOption = new Map(
+    grouped.map((g) => [g.optionId, g._count.optionId]),
+  );
+
+  const questions = poll.questions.map((q) => {
+    const options = q.options.map((o) => ({
+      id: o.id,
+      text: o.text,
+      count: countByOption.get(o.id) ?? 0,
+    }));
+    const totalAnswers = options.reduce((sum, o) => sum + o.count, 0);
+    return {
+      id: q.id,
+      title: q.title,
+      order: q.order,
+      totalAnswers,
+      options: options.map((o) => ({
+        ...o,
+        percentage: totalAnswers ? Math.round((o.count / totalAnswers) * 100) : 0,
+      })),
+    };
+  });
+
+  // Bucket responses into per-day counts for the last `days` days.
+  const buckets = new Map<string, number>();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today.getTime() - i * dayMs);
+    buckets.set(d.toISOString().slice(0, 10), 0);
+  }
+  for (const r of recent) {
+    const d = new Date(r.submittedAt);
+    d.setHours(0, 0, 0, 0);
+    const key = d.toISOString().slice(0, 10);
+    if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + 1);
+  }
+  const timeline = [...buckets.entries()].map(([date, count]) => ({
+    date,
+    count,
+  }));
+
+  return {
+    poll: {
+      id: poll.id,
+      title: poll.title,
+      status: poll.status,
+      expiresAt: poll.expiresAt ? poll.expiresAt.toISOString() : null,
+      createdAt: poll.createdAt.toISOString(),
+      isPublished: poll.isPublished,
+      resultsVisibility: poll.resultsVisibility,
+    },
+    totalResponses,
+    anonymousCount,
+    questions,
+    timeline,
+  };
+};
+
+export const publishPollResults = async (pollId: string) => {
+  const { id: userId } = await getCurrentLoggedInUser();
+  const poll = await prisma.poll.findFirst({
+    where: { id: pollId, creatorId: userId },
+    select: { id: true },
+  });
+  if (!poll) return { success: false, error: "Poll not found." };
+
+  await prisma.poll.update({
+    where: { id: pollId },
+    data: { resultsVisibility: true },
+  });
+  revalidatePath(`/analytics/${pollId}`);
+  return { success: true };
 };
 
 export const getMyPollsStats = async () => {

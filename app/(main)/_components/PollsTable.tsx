@@ -41,6 +41,8 @@ type Props = {
   emptyDescription?: string;
   /** Override the per-row action buttons. Defaults to copy-link + open. */
   renderActions?: (poll: PollRow) => ReactNode;
+  /** When set, the poll title links to `${rowHrefBase}/${poll.id}`. */
+  rowHrefBase?: string;
 
   // ── Static mode (client-side): pass the full list. ──
   polls?: PollRow[];
@@ -218,6 +220,7 @@ export function PollsTable({
   emptyTitle = "You haven’t created any polls yet.",
   emptyDescription = "Spin up your first poll — share a link, watch responses land in real-time.",
   renderActions,
+  rowHrefBase,
   polls = [],
   limit,
   viewAllHref,
@@ -434,9 +437,18 @@ export function PollsTable({
                   className="hover:bg-surface-container-low/40 transition-colors"
                 >
                   <td className="px-6 py-5 max-w-[320px]">
-                    <div className="font-body-md text-on-surface font-semibold truncate">
-                      {poll.title}
-                    </div>
+                    {rowHrefBase ? (
+                      <Link
+                        href={`${rowHrefBase}/${poll.id}`}
+                        className="font-body-md text-on-surface font-semibold truncate block hover:text-primary hover:underline underline-offset-2"
+                      >
+                        {poll.title}
+                      </Link>
+                    ) : (
+                      <div className="font-body-md text-on-surface font-semibold truncate">
+                        {poll.title}
+                      </div>
+                    )}
                     {showDescription && poll.description && (
                       <div className="font-body-md text-sm text-on-surface-variant/90 mt-0.5 truncate">
                         {poll.description}

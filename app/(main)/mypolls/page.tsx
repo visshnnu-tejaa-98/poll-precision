@@ -77,6 +77,7 @@ export default async function MyPollsPage() {
         showQuestions
         showExpires
         fillHeight
+        rowHrefBase="/analytics"
         fetchPage={getMyPollsPaginated}
         pageSize={PAGE_SIZE}
         initialData={firstPage}
