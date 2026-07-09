@@ -101,6 +101,42 @@ export const getPollById = async (pollId: string) => {
   }
 };
 
+export const getMyPolls = async () => {
+  const { clerkUserId } = await getCurrentLoggedInUser();
+
+  try {
+    const polls = await prisma.poll.findMany({
+      where: { creator: { clerkUserId } },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        isPublished: true,
+        expiresAt: true,
+        createdAt: true,
+        _count: { select: { responses: true, questions: true } },
+      },
+    });
+
+    return polls.map((poll) => ({
+      id: poll.id,
+      title: poll.title,
+      description: poll.description,
+      status: poll.status,
+      isPublished: poll.isPublished,
+      questionCount: poll._count.questions,
+      responseCount: poll._count.responses,
+      expiresAt: poll.expiresAt ? poll.expiresAt.toISOString() : null,
+      createdAt: poll.createdAt.toISOString(),
+    }));
+  } catch (error) {
+    console.error("Database getMyPolls error:", error);
+    throw new Error("Failed to get the polls data.");
+  }
+};
+
 export const getAllPollsByUserId = async () => {
   const { clerkUserId } = await getCurrentLoggedInUser();
 
@@ -119,14 +155,15 @@ export const getAllPollsByUserId = async () => {
         id: true,
         title: true,
         status: true,
+        expiresAt: true,
         createdAt: true,
         responses: true,
       },
     });
-    console.log({ polls });
     return polls.map((poll) => ({
       ...poll,
       createdAt: poll.createdAt.toISOString(),
+      expiresAt: poll.expiresAt ? poll.expiresAt.toISOString() : null,
     }));
   } catch (error) {
     console.error("Database getData error:", error);

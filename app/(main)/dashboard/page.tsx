@@ -6,49 +6,12 @@ import {
   RecentPollsTable,
   type RecentPoll,
 } from "./_components/RecentPollsTable";
+import { getStatsDetails } from "@/app/utils";
 
 export const metadata: Metadata = {
   title: "Dashboard | Poll Precision",
   description: "Manage and analyze your active campaigns.",
 };
-
-type Trend = { value: string; direction: "up" | "down"; tone: string };
-
-type StatCard = {
-  label: string;
-  value: string;
-  icon: string;
-  iconWrap: string;
-  ringTint: string;
-  trend: Trend;
-};
-
-const STATS: StatCard[] = [
-  {
-    label: "Total Polls",
-    value: "124",
-    icon: "ballot",
-    iconWrap: "bg-surface-container text-primary",
-    ringTint: "bg-primary/5",
-    trend: { value: "12%", direction: "up", tone: "text-primary" },
-  },
-  {
-    label: "Total Responses",
-    value: "45.2k",
-    icon: "group",
-    iconWrap: "bg-secondary-container/10 text-secondary",
-    ringTint: "bg-secondary/5",
-    trend: { value: "8.4%", direction: "up", tone: "text-secondary" },
-  },
-  {
-    label: "Avg Participation",
-    value: "68%",
-    icon: "data_usage",
-    iconWrap: "bg-surface-container text-tertiary",
-    ringTint: "bg-tertiary/5",
-    trend: { value: "2.1%", direction: "down", tone: "text-error" },
-  },
-];
 
 export default async function DashboardOverviewPage() {
   const polls = await getAllPollsByUserId();
@@ -58,11 +21,13 @@ export default async function DashboardOverviewPage() {
       id: p.id,
       title: p.title,
       status: p.status,
+      expiresAt: p.expiresAt,
       responseCount: p.responses?.length ?? 0,
       createdAt: p.createdAt,
     }))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
+  const statsDetails = await getStatsDetails();
   return (
     <>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -93,7 +58,7 @@ export default async function DashboardOverviewPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {STATS.map((stat) => (
+        {statsDetails.map((stat) => (
           <div
             key={stat.label}
             className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 ambient-shadow relative overflow-hidden group"

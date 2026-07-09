@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { Icon } from "@/app/_components/Icon";
 import { getPollById } from "@/app/actions/poll";
-import { EXPIRED } from "@/app/utils/constants";
+import { getEffectiveStatus } from "@/app/utils/poll-status";
 import { PollCountdown } from "./_components/PollCountdown";
 import { PollResponseForm } from "./_components/PollResponseForm";
 import { useSocket } from "@/app/utils/SocketProvider";
@@ -110,8 +110,7 @@ export default function PublicPollPage({ params }: Props) {
   }
 
   const expiresAt = poll.expiresAt ? new Date(poll.expiresAt) : null;
-  const isClosed =
-    poll.status === EXPIRED || (expiresAt !== null && expiresAt <= new Date());
+  const isClosed = getEffectiveStatus(poll.status, poll.expiresAt) === "expired";
 
   return (
     <Chrome>

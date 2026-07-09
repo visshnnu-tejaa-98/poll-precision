@@ -9,6 +9,7 @@ import { useState } from "react";
 const PRIMARY_LINKS = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/builder", label: "Poll Builder", icon: "ballot" },
+  { href: "/mypolls", label: "My Polls", icon: "group" },
   { href: "/submissions", label: "Submissions", icon: "group" },
   { href: "/reports", label: "Reports", icon: "insights" },
 ] as const;
