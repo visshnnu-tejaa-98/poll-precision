@@ -1,12 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { PollInput, PollInputSchema } from "../(main)/builder/zod.schema";
+import {
+  DraftPollSchema,
+  PollInput,
+  PollInputSchema,
+} from "../(main)/builder/zod.schema";
 import { validate } from "../common/zod.middleware";
 import { prisma } from "../lib/db";
 import { Prisma } from "../generated/prisma/client";
 import { getCurrentLoggedInUser } from "../utils";
-import { ACTIVE } from "../utils/constants";
+import { ACTIVE, DRAFT } from "../utils/constants";
 import type { PollsPageRequest, PollStatusFilter } from "./poll-filters";
 
 // Build the SQL WHERE for a creator's polls, pushing search + effective-status
@@ -267,7 +271,7 @@ export const saveNewPoll = async (payload: PollInput, publish: boolean) => {
         responseTimer: timerEnabled,
         timerInMinutes: timerMinutes,
         creatorId: id,
-        status: ACTIVE,
+        status: publish ? ACTIVE : DRAFT,
         questions: {
           create: questions.map((question, index) => ({
             title: question.title,
@@ -300,6 +304,16 @@ export const savePoll = async (payload: unknown) => {
   const data = await validate(PollInputSchema, payload);
   const pollId = await saveNewPoll(data, true);
   return pollId;
+};
+
+// Persist an in-progress poll without publishing it. Uses the relaxed draft
+// schema (nothing required) and stores it with status DRAFT / isPublished=false,
+// so it stays out of the public poll page until the creator publishes.
+export const saveDraftPoll = async (payload: unknown) => {
+  const data = await validate(DraftPollSchema, payload);
+  const result = await saveNewPoll(data, false);
+  revalidatePath("/mypolls");
+  return result;
 };
 
 export const getPollById = async (pollId: string) => {

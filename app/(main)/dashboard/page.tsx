@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Icon } from "@/app/_components/Icon";
 import { getAllPollsByUserId } from "@/app/actions/poll";
 import { PollsTable, type PollRow } from "../_components/PollsTable";
+import { CreatorLiveRefresh } from "../_components/CreatorLiveRefresh";
 import { getStatsDetails } from "@/app/utils";
 
 export const metadata: Metadata = {
@@ -28,6 +29,7 @@ export default async function DashboardOverviewPage() {
   const statsDetails = await getStatsDetails();
   return (
     <>
+      <CreatorLiveRefresh />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="font-headline-md text-headline-md text-on-surface font-bold">
@@ -88,7 +90,7 @@ export default async function DashboardOverviewPage() {
                   name={
                     stat.trend.direction === "up" ?
                       "arrow_upward"
-                    : "arrow_downward"
+                      : "arrow_downward"
                   }
                   className="text-[16px] font-bold"
                 />

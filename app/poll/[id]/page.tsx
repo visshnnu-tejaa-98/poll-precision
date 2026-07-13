@@ -6,6 +6,7 @@ import { Icon } from "@/app/_components/Icon";
 import { getPollById, getPublicPollResults } from "@/app/actions/poll";
 import { hasRespondedToPoll } from "@/app/actions/response";
 import { getEffectiveStatus } from "@/app/utils/poll-status";
+import { useSocket } from "@/app/utils/SocketProvider";
 import { PollCountdown } from "./_components/PollCountdown";
 import { PollResponseForm } from "./_components/PollResponseForm";
 import { PollResults } from "./_components/PollResults";
@@ -57,6 +58,7 @@ function Chrome({ children }: { children: React.ReactNode }) {
 export default function PublicPollPage({ params }: Props) {
   const { id } = use(params);
   const { isSignedIn, isLoaded } = useUser();
+  const { socket } = useSocket();
 
   const [poll, setPoll] = useState<Poll | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,6 +109,30 @@ export default function PublicPollPage({ params }: Props) {
       active = false;
     };
   }, [canSeeResults, results, id]);
+
+  // While results are visible, subscribe to live updates: when anyone submits a
+  // response the server broadcasts `poll:results` and we re-fetch the aggregate.
+  useEffect(() => {
+    if (!canSeeResults || !socket) return;
+    let active = true;
+
+    const join = () => socket.emit("join:poll", id);
+    const onResults = (data: { pollId: string }) => {
+      if (data?.pollId !== id) return;
+      getPublicPollResults(id).then((res) => active && setResults(res)).catch(() => {});
+    };
+
+    socket.on("connect", join);
+    socket.on("poll:results", onResults);
+    if (socket.connected) join();
+
+    return () => {
+      active = false;
+      socket.emit("leave:poll", id);
+      socket.off("connect", join);
+      socket.off("poll:results", onResults);
+    };
+  }, [canSeeResults, socket, id]);
 
   if (loading) {
     return (

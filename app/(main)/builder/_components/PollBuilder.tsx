@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { AdvancedSettingsCard } from "./AdvancedSettingsCard";
 import { BuilderHeader } from "./BuilderHeader";
 import { GeneralInfoCard } from "./GeneralInfoCard";
@@ -11,7 +12,7 @@ import { BuilderActions } from "./BuilderActions";
 import { PublishSuccessModal } from "./PublishSuccessModal";
 import { QuestionsCard } from "./QuestionsCard";
 import type { AdvancedSettings, PollSettings, Question } from "./types";
-import { savePoll } from "@/app/actions/poll";
+import { savePoll, saveDraftPoll } from "@/app/actions/poll";
 import { PollInputSchema } from "../zod.schema";
 import { useToast } from "@/app/_components/Toast";
 import type { ZodIssue } from "zod";
@@ -47,17 +48,35 @@ export function PollBuilder() {
   const [settings, setSettings] = useState<PollSettings>(INITIAL_SETTINGS);
   const [advanced, setAdvanced] = useState<AdvancedSettings>(INITIAL_ADVANCED);
   const [publishing, setPublishing] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [publishedPollId, setPublishedPollId] = useState<string | null>(null);
   const { notify } = useToast();
+  const router = useRouter();
 
-  const handleSaveDraft = () => {
-    console.log("save draft", {
+  const handleSaveDraft = async () => {
+    if (savingDraft || publishing) return;
+
+    const rawData = {
       title,
       description,
       questions,
-      settings,
-      advanced,
-    });
+      ...settings,
+      ...advanced,
+    };
+
+    setSavingDraft(true);
+    try {
+      const result = await saveDraftPoll(rawData);
+      if (result?.pollId) {
+        notify("Draft saved", "success");
+        router.push("/mypolls");
+      } else {
+        setSavingDraft(false);
+      }
+    } catch {
+      notify("Something went wrong while saving. Please try again.", "error");
+      setSavingDraft(false);
+    }
   };
 
   const handlePublish = async () => {
@@ -120,6 +139,7 @@ export function PollBuilder() {
             onSaveDraft={handleSaveDraft}
             onPublish={handlePublish}
             publishing={publishing}
+            savingDraft={savingDraft}
           />
         </div>
 
@@ -134,6 +154,8 @@ export function PollBuilder() {
             <BuilderActions
               onSaveDraft={handleSaveDraft}
               onPublish={handlePublish}
+              savingDraft={savingDraft}
+              publishing={publishing}
             />
           </div>
         </div>

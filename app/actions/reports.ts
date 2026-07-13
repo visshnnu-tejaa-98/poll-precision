@@ -23,6 +23,7 @@ export const getReportsData = async () => {
       activePolls,
       recent,
       topPolls,
+      exportPolls,
     ] = await Promise.all([
       prisma.response.count({ where: ownResponses }),
       prisma.response.count({ where: { ...ownResponses, isAnonymous: true } }),
@@ -46,13 +47,22 @@ export const getReportsData = async () => {
       prisma.poll.findMany({
         where: { creatorId: userId },
         orderBy: { responses: { _count: "desc" } },
-        take: 5,
+        take: 6,
         select: {
           id: true,
           title: true,
           status: true,
           expiresAt: true,
           createdAt: true,
+          _count: { select: { responses: true } },
+        },
+      }),
+      prisma.poll.findMany({
+        where: { creatorId: userId },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          title: true,
           _count: { select: { responses: true } },
         },
       }),
@@ -84,6 +94,11 @@ export const getReportsData = async () => {
         status: p.status,
         expiresAt: p.expiresAt ? p.expiresAt.toISOString() : null,
         createdAt: p.createdAt.toISOString(),
+        responseCount: p._count.responses,
+      })),
+      exportPolls: exportPolls.map((p) => ({
+        id: p.id,
+        title: p.title,
         responseCount: p._count.responses,
       })),
     };

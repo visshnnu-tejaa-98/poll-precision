@@ -5,6 +5,7 @@ import {
   getMySubmissionsStats,
 } from "@/app/actions/responses";
 import { SubmissionsTable } from "./_components/SubmissionsTable";
+import { CreatorLiveRefresh } from "../_components/CreatorLiveRefresh";
 
 export const metadata: Metadata = {
   title: "Submissions | Poll Precision",
@@ -31,6 +32,7 @@ export default async function SubmissionsPage() {
 
   return (
     <div className="flex flex-col gap-6 md:h-[calc(100vh-96px)] md:overflow-hidden">
+      <CreatorLiveRefresh />
       <div className="shrink-0 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className="font-headline-md text-headline-md text-on-surface font-bold">

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Icon } from "@/app/_components/Icon";
 import { getReportsData } from "@/app/actions/reports";
 import { getEffectiveStatus } from "@/app/utils/poll-status";
+import { ExportCenter } from "./_components/ExportCenter";
+import { CreatorLiveRefresh } from "../_components/CreatorLiveRefresh";
 
 export const metadata: Metadata = {
   title: "Reports | Poll Precision",
@@ -15,26 +17,6 @@ const dateFmt = new Intl.DateTimeFormat("en-GB", {
   month: "short",
   year: "numeric",
 });
-
-const EXPORTS: {
-  label: string;
-  meta: string;
-  icon: string;
-  href?: string;
-}[] = [
-  {
-    label: "All Responses",
-    meta: "CSV • all polls",
-    icon: "table_view",
-    href: "/api/export/responses",
-  },
-  { label: "Monthly Performance", meta: "PDF • coming soon", icon: "description" },
-  {
-    label: "Demographic Insights",
-    meta: "PDF • coming soon",
-    icon: "query_stats",
-  },
-];
 
 function StatusBadge({ status }: { status: "active" | "draft" | "expired" }) {
   if (status === "active") {
@@ -68,6 +50,7 @@ export default async function ReportsPage() {
     activePolls,
     trend,
     topPolls,
+    exportPolls,
   } = data;
 
   const kpis = [
@@ -94,6 +77,7 @@ export default async function ReportsPage() {
 
   return (
     <>
+      <CreatorLiveRefresh />
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -323,61 +307,7 @@ export default async function ReportsPage() {
         </div>
 
         {/* Export center */}
-        <div className="bg-surface-container-lowest p-stack-lg rounded-xl border border-outline-variant shadow-sm flex flex-col">
-          <h2 className="font-headline-md text-headline-md font-bold text-on-surface mb-1">
-            Export Center
-          </h2>
-          <p className="font-label-sm text-label-sm text-on-surface-variant mb-6">
-            Download report bundles
-          </p>
-          <div className="space-y-3 flex-1">
-            {EXPORTS.map((item) => {
-              const inner = (
-                <>
-                  <div className="flex items-center gap-3">
-                    <Icon name={item.icon} className="text-primary" />
-                    <div>
-                      <p className="font-label-sm text-on-surface font-bold leading-tight">
-                        {item.label}
-                      </p>
-                      <p className="text-[12px] text-on-surface-variant">
-                        {item.meta}
-                      </p>
-                    </div>
-                  </div>
-                  <Icon
-                    name="download"
-                    className="text-on-surface-variant group-hover:text-primary"
-                  />
-                </>
-              );
-              return item.href ? (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  download
-                  className="p-4 bg-surface-container border border-outline-variant rounded-lg flex items-center justify-between group hover:border-primary transition-colors cursor-pointer"
-                >
-                  {inner}
-                </a>
-              ) : (
-                <div
-                  key={item.label}
-                  className="p-4 bg-surface-container border border-outline-variant rounded-lg flex items-center justify-between opacity-60 cursor-not-allowed"
-                >
-                  {inner}
-                </div>
-              );
-            })}
-          </div>
-          <button
-            type="button"
-            className="mt-6 w-full py-3 border-2 border-dashed border-outline-variant rounded-xl text-on-surface-variant font-label-sm hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
-          >
-            <Icon name="add" />
-            New Scheduled Report
-          </button>
-        </div>
+        <ExportCenter polls={exportPolls} />
       </div>
     </>
   );

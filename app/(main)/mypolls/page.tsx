@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Icon } from "@/app/_components/Icon";
 import { getMyPollsPaginated, getMyPollsStats } from "@/app/actions/poll";
 import { PollsTable } from "../_components/PollsTable";
+import { CreatorLiveRefresh } from "../_components/CreatorLiveRefresh";
 
 export const metadata: Metadata = {
   title: "My Polls | Poll Precision",
@@ -31,6 +32,7 @@ export default async function MyPollsPage() {
 
   return (
     <div className="flex flex-col gap-6 md:h-[calc(100vh-96px)] md:overflow-hidden">
+      <CreatorLiveRefresh />
       <div className="shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="font-headline-md text-headline-md text-on-surface font-bold">

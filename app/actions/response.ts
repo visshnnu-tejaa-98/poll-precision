@@ -2,6 +2,7 @@
 
 import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "../lib/db";
+import { broadcastCreatorUpdate, broadcastPollResults } from "../lib/realtime";
 import { ACTIVE } from "../utils/constants";
 import { ResponseInputSchema } from "./response.schema";
 
@@ -51,6 +52,7 @@ export const submitPollResponse = async (
       authenticatedOnly: true,
       allowAnonymous: true,
       allowResponseEditing: true,
+      creator: { select: { clerkUserId: true } },
       questions: {
         select: {
           id: true,
@@ -149,6 +151,8 @@ export const submitPollResponse = async (
           data: { submittedAt: new Date() },
         }),
       ]);
+      broadcastPollResults(pollId);
+      broadcastCreatorUpdate(poll.creator.clerkUserId);
       return { success: true, responseId: existing.id };
     }
   }
@@ -169,6 +173,8 @@ export const submitPollResponse = async (
       },
       select: { id: true },
     });
+    broadcastPollResults(pollId);
+    broadcastCreatorUpdate(poll.creator.clerkUserId);
     return { success: true, responseId: response.id };
   } catch (error) {
     // Unique violation on (pollId, respondentId) → duplicate submit race.

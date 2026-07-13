@@ -5,6 +5,7 @@ import { Icon } from "@/app/_components/Icon";
 import { getPollAnalytics } from "@/app/actions/poll";
 import { getEffectiveStatus } from "@/app/utils/poll-status";
 import { AnalyticsActions } from "./_components/AnalyticsActions";
+import { LiveResults } from "./_components/LiveResults";
 
 type Props = { params: Promise<{ pollId: string }> };
 
@@ -44,6 +45,8 @@ export default async function PollAnalyticsPage({ params }: Props) {
 
   return (
     <>
+      <LiveResults pollId={poll.id} />
+
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
