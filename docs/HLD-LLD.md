@@ -268,9 +268,9 @@ Notes:
 - `expiresAt` is transformed in the schema: `""`|null → `null`, else `new Date()`.
 - Validation runs **twice** (client for UX, server for trust). Never trust the client.
 
-## 5.2 Save Response — planned write pipeline (❌ not built)
+## 5.2 Save Response — implemented write pipeline (✅ `app/actions/response.ts`)
 
-This is the next feature. Contract and steps:
+Contract and steps (as built):
 
 ```
 ResponseInputSchema = {
@@ -308,21 +308,38 @@ PollResponseForm.handleSubmit → await submitPollResponse(...) →
 - Validate option/question membership against the **DB copy** of the poll, not the
   payload, to prevent injecting foreign option ids.
 
-## 5.4 Realtime-on-write (planned design decision)
+## 5.4 Realtime-on-write (✅ implemented — internal relay bridge)
 
-A Server Action and the `io` server live in the same process but different modules.
-Two options to push live counts after a save:
+**Gotcha discovered:** the "obvious" approach — `globalThis.io = io` in `server.js`,
+then `globalThis.io?.to(room).emit(...)` from the action — **does not work here.**
+Next.js (Turbopack) runs Server Actions in a **different module/global context**
+than the custom `server.js` process, so `globalThis.io` is `undefined` inside the
+action. Verified empirically (a debug route reported `ioPresent: false` while a
+relayed broadcast still reached the client).
 
-- **(A)** In `server.js`, assign `globalThis.io = io`; the action calls
-  `globalThis.io?.to(pollId).emit("poll:results", counts)`.
-- **(B)** Client emits `response:submitted` after the action resolves; the socket
-  server recomputes/broadcasts. Simpler, recommended first.
+**What we do instead:** the Next side opens one persistent internal
+`socket.io-client` connection back to our own server and asks it to relay:
+
+```
+submitPollResponse() [server action]
+  └─ broadcastPollResults(pollId)      → emit "internal:relay" { token, room:pollId, event:"poll:results" }
+  └─ broadcastCreatorUpdate(clerkId)   → emit "internal:relay" { token, room:`creator:<id>`, event:"creator:update" }
+
+server.js  socket.on("internal:relay", ({token,room,event,payload}) =>
+             token === RELAY_TOKEN && io.to(room).emit(event, payload))
+```
+
+- `app/lib/realtime.ts` holds the internal emitter singleton + the two helpers.
+- The relay is guarded by a shared `SOCKET_RELAY_TOKEN` so only our own server
+  code can trigger a broadcast.
+- Clients re-fetch the authoritative aggregate (Server Action) on the event rather
+  than trusting counts pushed over the socket.
 
 ---
 
-# 6. How We RETRIEVE Data for Analytics (planned)
+# 6. How We RETRIEVE Data for Analytics (✅ implemented)
 
-## 6.1 Aggregations (❌ dashboard currently hardcoded)
+## 6.1 Aggregations (✅ `getPollAnalytics` / `getPublicPollResults`)
 
 ```
 getPollResults(pollId) [server]:
@@ -335,10 +352,12 @@ getPollResults(pollId) [server]:
   → shape into { questionId → { optionId → count } } for the UI
 ```
 
-## 6.2 Public results view (❌)
+## 6.2 Public results view (✅)
 
-When `isPublished` (results) + `resultsVisibility`, `/poll/[id]` should render a
-read-only summary instead of the form. Guard the results action by these flags.
+When `isPublished` + `resultsVisibility`, `/poll/[id]` renders a read-only summary
+(`PollResults`) instead of the form — shown after the visitor submits, if they've
+already responded, or once the poll is closed. `getPublicPollResults` returns
+`null` unless `resultsVisibility` is on, so results stay private until published.
 
 ---
 
@@ -348,11 +367,16 @@ read-only summary instead of the form. Guard the results action by these flags.
 
 ```
 io.on("connection", socket => {
-  socket.emit("message", "Hello from server");         // greeting
-  socket.on("message", d => socket.emit("message", `Echo: ${d}`)); // echo demo
-  socket.on("select:option", d => console.log(d));     // vote signal (not persisted)
+  socket.on("join:poll",    id  => socket.join(id));            // poll results room
+  socket.on("leave:poll",   id  => socket.leave(id));
+  socket.on("join:creator", cid => socket.join(`creator:${cid}`)); // creator aggregates room
+  socket.on("leave:creator",cid => socket.leave(`creator:${cid}`));
+  socket.on("internal:relay", ({token,room,event,payload}) =>   // Server-Action bridge (§5.4)
+    token === RELAY_TOKEN && io.to(room).emit(event, payload));
 });
 ```
+
+(The original `message`/`Echo`/`select:option` demo handlers have been removed.)
 
 ## 7.2 Client singleton (`socket.js`)
 
@@ -364,19 +388,24 @@ export const socketInstance = io({ autoConnect: false }); // connect controlled 
 
 - Mounted in `poll/[id]/layout.tsx` (ancestor of page + form — a Provider must be
   above every `useSocket()` consumer).
-- Effect attaches `connect`/`disconnect`/`message` listeners **then** calls
-  `connect()` (so one-shot server emits aren't missed), and `off()`+`disconnect()`
-  on cleanup.
-- Exposes `{ socket, isConnected, transport, lastMessage }` via context.
+- Effect attaches `connect`/`disconnect` listeners, calls `connect()`, and
+  `off()`+`disconnect()` on cleanup.
+- Exposes `{ socket, isConnected }` via context.
+- The creator pages (dashboard/my-polls/reports/submissions) are **not** under
+  this provider; `CreatorLiveRefresh` drives the shared `socketInstance` directly
+  and calls `router.refresh()` on `creator:update`.
 
-## 7.4 Event contract (current + planned)
+## 7.4 Event contract (implemented)
 
-| Event                | Dir      | Payload                  | Purpose                  |
-| -------------------- | -------- | ------------------------ | ------------------------ |
-| `message`            | S→C, C→S | string                   | greeting/echo (demo)     |
-| `select:option`      | C→S      | `{questionId, optionId}` | live selection signal ✅ |
-| `poll:results`       | S→C      | counts map               | live analytics ❌        |
-| `response:submitted` | C→S      | `{pollId}`               | trigger recompute ❌     |
+| Event             | Dir | Payload              | Purpose                                             |
+| ----------------- | --- | -------------------- | --------------------------------------------------- |
+| `join:poll`       | C→S | `pollId`             | join a poll's results room ✅                       |
+| `leave:poll`      | C→S | `pollId`             | leave it ✅                                         |
+| `join:creator`    | C→S | `clerkUserId`        | join a creator's cross-poll aggregates room ✅      |
+| `leave:creator`   | C→S | `clerkUserId`        | leave it ✅                                         |
+| `poll:results`    | S→C | `{pollId}`           | poll's results changed → client re-fetches ✅       |
+| `creator:update`  | S→C | `{}`                 | a creator's poll changed → `router.refresh()` ✅    |
+| `internal:relay`  | C→S | `{token,room,event}` | Server-Action→io bridge, token-guarded (§5.4) ✅    |
 
 ---
 
@@ -404,7 +433,7 @@ getPollById → prisma.poll.findFirst(published, nested select)
 page → render: loading → (form | closed | not-found)
 ```
 
-## 8.3 Submit response (❌ planned)
+## 8.3 Submit response (✅)
 
 ```
 User → PollResponseForm: select options, Submit
@@ -414,9 +443,10 @@ action → prisma.poll.findUnique(include questions/options)
 action → guards: published/active/expiry/auth-mode
 action → validate: required + option membership
 action → prisma.$transaction: create Response + Answers
+action → broadcastPollResults(pollId) + broadcastCreatorUpdate(creator.clerkUserId)  // via internal:relay (§5.4)
 action → Form: { responseId } | error
-Form → thank-you screen ; (optional) socket "response:submitted"
-server → dashboards: "poll:results" broadcast
+Form → thank-you / live results screen
+server → poll room: "poll:results" ; creator room: "creator:update"
 ```
 
 ---
@@ -436,48 +466,32 @@ server → dashboards: "poll:results" broadcast
 
 # 10. Known Gaps / Deviations (traceability)
 
-| Area                                     | State          | Action item                                       |
-| ---------------------------------------- | -------------- | ------------------------------------------------- |
-| Response persistence                     | ❌             | `app/actions/response.ts` + `ResponseInputSchema` |
-| Backend required/expiry/auth enforcement | ❌             | in `submitPollResponse`                           |
-| Analytics                                | ❌ (hardcoded) | `getPollResults` + dashboard wiring               |
-| Publish results view                     | ❌             | conditional `/poll/[id]` render + guards          |
-| Live counts                              | ⚠️ infra only  | `poll:results` broadcast (§5.4)                   |
-| Draft save / EXPIRED transition          | ❌             | builder draft + status job/check                  |
-| "Express APIs" (PRD wording)             | deviation      | implemented as Server Actions                     |
-| README                                   | ❌             | replace boilerplate                               |
+| Area                                     | State       | Notes                                                            |
+| ---------------------------------------- | ----------- | ---------------------------------------------------------------- |
+| Response persistence                     | ✅          | `app/actions/response.ts` + `ResponseInputSchema`                |
+| Backend required/expiry/auth enforcement | ✅          | in `submitPollResponse`                                          |
+| Analytics                                | ✅          | `getPollAnalytics` / `getPublicPollResults` (real aggregates)    |
+| Publish results view                     | ✅          | conditional `/poll/[id]` render, guarded by `resultsVisibility`  |
+| Live counts / analytics                  | ✅          | `poll:results` + `creator:update` via internal relay (§5.4)      |
+| Draft save                               | ⚠️ partial  | can save a draft, but no `builder/[id]` flow to resume/publish it |
+| Edit / delete poll                       | ❌          | no update/delete action; schema has no cascade deletes           |
+| Live updates for paged/filtered tables   | ❌          | cards + first page refresh; deeper table rows don't              |
+| EXPIRED transition                       | ✅ (derived)| computed at read time (`poll-status.ts`), not persisted          |
+| "Express APIs" (PRD wording)             | deviation   | implemented as Server Actions                                    |
+| README                                   | ✅          | rewritten                                                        |
+| Deployment / deployed link               | ❌          | needs a persistent-Node host (custom server + Socket.IO)         |
 
-```
+# 11. Remaining work
 
+Phases 1–3 of the original build plan (persist responses, live counts + analytics,
+results publishing, draft save, README) are **done**. What's left:
 
-
-
-Phase 1 — Persist a response (the immediate goal)
-
-Step 1 — Response validation schema
-- New app/(main)/builder/zod.schema.ts sibling (or app/actions/response.schema.ts): ResponseInputSchema = { pollId: string, answers: { questionId, optionId }[] }.
-
-Step 2 — submitPollResponse server action (app/actions/response.ts)
-- validate(ResponseInputSchema, payload).
-- Load poll from DB with questions + options.
-- Guards (server-side, authoritative): exists, isPublished, status === ACTIVE, not past expiresAt.
-- Resolve respondent via currentUser() (optional): enforce authenticatedOnly; set respondentId / isAnonymous.
-- Backend validation: all required questions answered; every questionId/optionId belongs to the poll.
-- prisma.$transaction: create Response + Answers.
-- Catch the @@unique([pollId, respondentId]) collision → "already responded".
-
-Step 3 — Wire the form to the action
-- Pass pollId into PollResponseForm.
-- Make handleSubmit async: call the action, add submitting state + inline error, show thank-you only on real success.
-Phase 2 — Live counts + analytics
-
-Step 4 — getPollResults(pollId) via answer.groupBy + response.count.
-Step 5 — Broadcast poll:results after the transaction commits (decide globalThis.io vs. client-triggered recompute — recommend client-triggered first).
-Step 6 — Replace the hardcoded dashboard stats with real data + subscribe to poll:results.
-
-Phase 3 — Results publishing & lifecycle
-
-Step 7 — Public results view on /poll/[id] when isPublished + resultsVisibility.
-Step 8 — Draft save + EXPIRED status transition.
-Step 9 — Replace the boilerplate README.
-```
+1. **Deployment** — add a deploy config and ship to a persistent-Node host (the
+   custom `server.js` + Socket.IO can't run on plain serverless).
+2. **Resumable drafts** — a `builder/[id]` flow to reopen a saved draft and
+   publish it (DRAFT → ACTIVE). Today "Save Draft" is write-only.
+3. **Edit / delete poll** — update/delete actions, plus `onDelete: Cascade` on the
+   `Question` / `QuestionOption` / `Response` / `Answer` relations so a poll can be
+   removed without FK errors.
+4. **Live updates for paged/filtered tables** — currently only stat cards and each
+   table's first page refresh live.

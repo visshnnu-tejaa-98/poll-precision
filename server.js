@@ -3,9 +3,10 @@ import next from "next";
 import { Server } from "socket.io";
 
 const dev = process.env.NODE_ENV !== "production";
-const hostname = "localhost";
-const port = 3000;
-// when using middleware `hostname` and `port` must be provided below
+// Bind to the platform-assigned port (Railway/Render/etc. inject PORT) and to
+// all interfaces in production so the container is reachable.
+const hostname = process.env.HOSTNAME || (dev ? "localhost" : "0.0.0.0");
+const port = parseInt(process.env.PORT || "3000", 10);
 const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
 
@@ -20,20 +21,6 @@ app.prepare().then(() => {
   const io = new Server(httpServer);
 
   io.on("connection", (socket) => {
-    console.log("Socket Connected", { socketId: socket.id });
-
-    socket.emit("message", "Hello from server");
-
-    // Echo client pings back so the round-trip is visible on the client.
-    socket.on("message", (data) => {
-      console.log("message from client:", data);
-      socket.emit("message", `Echo: ${data}`);
-    });
-
-    socket.on("select:option", (data) => {
-      console.log("select:option from client:", data);
-    });
-
     // A client viewing a poll's results joins that poll's room so it receives
     // `poll:results` broadcasts when someone submits a response.
     socket.on("join:poll", (pollId) => {
@@ -77,6 +64,6 @@ app.prepare().then(() => {
       process.exit(1);
     })
     .listen(port, () => {
-      console.log(`> Ready on http://${hostname}:${port}`);
+      console.log(`> Ready on port ${port}`);
     });
 });
