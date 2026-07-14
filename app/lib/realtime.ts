@@ -6,8 +6,15 @@ import { io as ioClient, type Socket } from "socket.io-client";
 // set in server.js is NOT visible here. Instead we open one persistent internal
 // socket connection back to our own server and ask it to relay broadcasts to the
 // real rooms. server.js handles `internal:relay` (guarded by a shared token).
+//
+// This is a LOOPBACK connection to our own server inside the same container, so
+// it must stay 127.0.0.1 — NOT the public domain. `PORT` is whatever the host
+// (Railway/Render/etc.) assigned; server.js binds to the same value, so they
+// always match. `INTERNAL_SOCKET_URL` is an escape hatch if the socket server
+// ever runs on a different host/port than this process.
 const PORT = process.env.PORT ?? "3000";
-const INTERNAL_URL = `http://127.0.0.1:${PORT}`;
+const INTERNAL_URL =
+  process.env.INTERNAL_SOCKET_URL ?? `http://127.0.0.1:${PORT}`;
 export const RELAY_TOKEN =
   process.env.SOCKET_RELAY_TOKEN ?? "poll-precision-internal-relay";
 
