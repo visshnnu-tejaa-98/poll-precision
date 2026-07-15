@@ -1,0 +1,20 @@
+# CRITICAL: never copy the host's node_modules into the image — they hold macOS
+# (arm64) binaries that would overwrite the Linux ones installed in the build and
+# break sharp/@emnapi at runtime. .next is rebuilt inside the image.
+node_modules
+.next
+
+# Secrets and local-only files
+.env
+.env.*
+!.env.example
+
+# VCS / logs / editor
+.git
+.gitignore
+*.log
+npm-debug.log*
+
+# Docker's own files
+Dockerfile
+.dockerignore
