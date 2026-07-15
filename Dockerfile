@@ -18,6 +18,14 @@ RUN apt-get update \
 COPY package.json package-lock.json* ./
 RUN npm install --include=dev --no-audit --no-fund
 
+# NEXT_PUBLIC_* vars are inlined into the client bundle by `next build`, so they
+# MUST be present at BUILD time — not just runtime. Railway passes service
+# variables as Docker build args, so declaring this ARG pulls it in; ENV then
+# exposes it to `next build`. Without it, Clerk's client components (the sign-in
+# button) render with an undefined key and don't show.
+ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+
 # Copy the rest and build (runs `prisma generate && next build`).
 COPY . .
 RUN npm run build
