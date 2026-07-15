@@ -15,8 +15,8 @@ const PRIMARY_LINKS = [
 ] as const;
 
 const SECONDARY_LINKS = [
-  { href: "/settings", label: "Settings", icon: "settings" },
-  { href: "/help", label: "Help", icon: "help_outline" },
+  // { href: "/settings", label: "Settings", icon: "settings" },
+  // { href: "/help", label: "Help", icon: "help_outline" },
 ] as const;
 
 export function Sidebar({
@@ -54,7 +54,7 @@ export function Sidebar({
                 className={
                   active ?
                     "flex items-center gap-3 bg-primary-container text-on-secondary-container rounded-lg px-4 py-3 transition-all"
-                  : "flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container-low transition-colors rounded-lg"
+                    : "flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container-low transition-colors rounded-lg"
                 }
               >
                 <Icon name={link.icon} filled={active} />
@@ -62,7 +62,7 @@ export function Sidebar({
                   className={
                     active ?
                       "font-label-sm text-label-sm font-semibold"
-                    : "font-label-sm text-label-sm"
+                      : "font-label-sm text-label-sm"
                   }
                 >
                   {link.label}
@@ -73,13 +73,13 @@ export function Sidebar({
         </div>
       </div>
       <div className="mt-auto p-6 space-y-1 border-t border-outline-variant">
-        <button
+        {/* <button
           type="button"
           className="w-full py-2.5 mb-4 bg-surface border border-outline text-primary font-label-sm text-label-sm rounded-lg hover:bg-primary/5 transition-colors"
         >
           Upgrade Plan
-        </button>
-        {SECONDARY_LINKS.map((link) => {
+        </button> */}
+        {/* {SECONDARY_LINKS.map((link) => {
           const active = pathname === link.href;
           return (
             <Link
@@ -88,14 +88,14 @@ export function Sidebar({
               className={
                 active ?
                   "flex items-center gap-3 bg-secondary-container text-on-secondary-container px-4 py-2 rounded-lg transition-all"
-                : "flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:bg-surface-container-low transition-colors rounded-lg"
+                  : "flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:bg-surface-container-low transition-colors rounded-lg"
               }
             >
               <Icon name={link.icon} filled={active} />
               <span className="font-label-sm text-label-sm">{link.label}</span>
             </Link>
           );
-        })}
+        })} */}
         <SignOutButton>
           <button
             type="button"
