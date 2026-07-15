@@ -6,9 +6,10 @@ FROM node:22-slim
 
 WORKDIR /app
 
-# Native runtime dependency some packages need (matches Railway's apt install).
+# Native runtime deps: libatomic1 for some native modules, openssl + ca-certificates
+# so Prisma can detect libssl (silences the openssl warning) and TLS works.
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends libatomic1 \
+  && apt-get install -y --no-install-recommends libatomic1 openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
 # Install ALL dependencies, including devDependencies — prisma, tailwindcss and

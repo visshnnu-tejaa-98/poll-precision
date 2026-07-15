@@ -58,12 +58,18 @@ app.prepare().then(() => {
     });
   });
 
+  // Bind explicitly to 0.0.0.0 (IPv4, all interfaces). Without this Node may
+  // bind IPv6-only inside a container, which makes Railway's proxy report
+  // "Application failed to respond".
   httpServer
     .once("error", (err) => {
       console.error(err);
       process.exit(1);
     })
-    .listen(port, () => {
-      console.log(`> Ready on port ${port}`);
+    .listen(port, "0.0.0.0", () => {
+      console.log(`> Ready on http://0.0.0.0:${port}`);
     });
+}).catch((err) => {
+  console.error("Failed to start server:", err);
+  process.exit(1);
 });
