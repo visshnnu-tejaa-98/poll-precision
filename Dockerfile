@@ -26,6 +26,7 @@ ENV NODE_ENV=production
 # Railway injects PORT at runtime; server.js binds to it (EXPOSE is documentation).
 EXPOSE 3000
 
-# Start the custom Next + Socket.IO server. (If you set a custom start command in
-# Railway — e.g. `npx prisma migrate deploy && npm start` — that overrides this.)
-CMD ["npm", "run", "start"]
+# Apply DB migrations, then start the custom Next + Socket.IO server. Baking this
+# into the image makes startup deterministic — do NOT set a Custom Start Command
+# in Railway, or it overrides this CMD.
+CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]

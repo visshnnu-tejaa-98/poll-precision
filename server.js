@@ -7,6 +7,10 @@ const dev = process.env.NODE_ENV !== "production";
 // all interfaces in production so the container is reachable.
 const hostname = process.env.HOSTNAME || (dev ? "localhost" : "0.0.0.0");
 const port = parseInt(process.env.PORT || "3000", 10);
+
+console.log(
+  `Booting server.js (NODE_ENV=${process.env.NODE_ENV}, PORT=${process.env.PORT ?? "unset→3000"})`,
+);
 const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
 
